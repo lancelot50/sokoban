@@ -119,6 +119,7 @@
 using namespace std;
 #include<stdlib.h>
 
+#include<locale>
 
 class Game
 {
@@ -206,7 +207,7 @@ private :
 	{
 		MoveAction move=LEFT;
 
-		switch(move)
+		switch(input)
 		{
 		case LEFT :
 //			moveLeft();
@@ -262,6 +263,7 @@ private :
 
 int main()
 {
+	wcout.imbue(locale("kor"));
 	Game game;
 	game.Start(8,10);
 	return 0;
