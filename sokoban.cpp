@@ -232,6 +232,7 @@ private :
 	{
 		clear();
 		drawStorage();
+		drawPlayer();
 	}
 
 	void clear()
