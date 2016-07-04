@@ -144,9 +144,19 @@ class Game
 
 	int m_StorageWidth;
 	int m_StorageHeight;
+	int m_StorageSize;
 
+	class Player
+	{
+		int m_PosIdx;
+		Player() :m_PosIdx(0) {}
+	public :
+		void SetPos(int PosIdx) { m_PosIdx = PosIdx;  }
+		int GetPos() const { return m_PosIdx; }
+	};
 
 public :
+	Game() : m_Storage(NULL), m_StorageWidth(0), m_StorageHeight(0), m_StorageSize(0) { }
 	void Start(int width, int height)
 	{
 		initialize(width, height);
@@ -167,6 +177,7 @@ private :
 
 		m_StorageWidth=Width;
 		m_StorageHeight=Height;
+		m_StorageSize = Width*Height;
 
 		for(int i=0; i<Width; ++i)
 		{
@@ -178,6 +189,17 @@ private :
 					m_Storage[i*Height+j]=EMPTY_SLOT;
 			}
 		}
+
+		int size = m_StorageWidth*m_StorageHeight;
+		int pos=rand() % size;
+		if (m_Storage[pos] == EMPTY_SLOT)
+		{
+			m_Storage[pos] = PLAYER;
+		}
+		else if (pos < m_StorageWidth)
+			m_Storage[pos + m_StorageWidth] = PLAYER;
+		else if (pos > size - m_StorageWidth)
+			m_Storage[pos - m_StorageWidth] = PLAYER;
 	}
 
 	void gameLoop()
@@ -203,6 +225,39 @@ private :
 		movePlayerPosition(input);
 	}
 
+	void moveLeft()
+	{
+		for (int i = 0; i < m_StorageSize; ++i)
+		{
+			if (m_Storage[i] == PLAYER && i > 0 && m_Storage[i - 1] != WALL)
+			{
+				BlockType temp = m_Storage[i-1];
+				m_Storage[i - 1] = PLAYER;
+				m_Storage[i] = temp;
+				break;
+			}
+			
+		}
+		wcout << L"왼쪽이동" << endl;
+	}
+
+	void moveRight()
+	{
+		for (int i = 0; i < m_StorageSize; ++i)
+		{
+			if (m_Storage[i] == PLAYER && i > 0 && m_Storage[i + 1] != WALL)
+			{
+				BlockType temp = m_Storage[i + 1];
+				m_Storage[i + 1] = PLAYER;
+				m_Storage[i] = temp;
+				break;
+			}
+
+		}
+		wcout << L"오른쪽이동" << endl;
+	}
+
+
 	void movePlayerPosition(wchar_t input)
 	{
 		MoveAction move=LEFT;
@@ -210,8 +265,7 @@ private :
 		switch(input)
 		{
 		case LEFT :
-//			moveLeft();
-			wcout<<L"왼쪽이동"<<endl;
+			moveLeft();
 			break;
 		case RIGHT :
 			break;
@@ -220,20 +274,15 @@ private :
 		case DOWN :
 			break;
 		default :
-			wcout<<L"정해지지않은입력:"<<move<<endl;
+			wcout<<L"정해지지않은입력:"<<input<<endl;
 			wcin.get();
 		}
 	}
 	
-	void drawPlayer()
-	{
-	}
-
 	void draw()
 	{
 		clear();
 		drawStorage();
-		drawPlayer();
 	}
 
 	void clear()
@@ -253,6 +302,11 @@ private :
 					break;
 				case EMPTY_SLOT :
 					wcout<<L'.';
+					break;
+				case PLAYER :
+					wcout << L'P';
+					break;
+				default:
 					break;
 				}
 			}
