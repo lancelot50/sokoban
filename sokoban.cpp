@@ -128,7 +128,8 @@ class Game
 		LEFT,
 		RIGHT,
 		UP,
-		DOWN
+		DOWN,
+		HOLD
 	};
 
 	enum BlockType
@@ -191,6 +192,8 @@ private :
 		}
 
 		int size = m_StorageWidth*m_StorageHeight;
+		
+		srand(static_cast<unsigned int>(time(NULL)));
 		int pos=rand() % size;
 		if (m_Storage[pos] == EMPTY_SLOT)
 		{
@@ -220,9 +223,35 @@ private :
 		return inputChar;
 	}
 
+	MoveAction GetMoveAction(wchar_t input)
+	{
+		MoveAction result = HOLD;
+		switch (input)
+		{
+		case 'a':
+			result = LEFT;
+			break;
+		case 'd':
+			result = RIGHT;
+			break;
+		case 'w':
+			result = UP;
+			break;
+		case 'x':
+			result = DOWN;
+			break;
+		default :
+			wcout << L"정해지지않은입력:" << input << endl;
+			wcin.get();
+		}
+
+		return result;
+	}
+
 	void update(wchar_t input)
 	{
-		movePlayerPosition(input);
+		MoveAction move = GetMoveAction(input);
+		movePlayerPosition(move);
 	}
 
 	void moveLeft()
@@ -258,23 +287,22 @@ private :
 	}
 
 
-	void movePlayerPosition(wchar_t input)
+	void movePlayerPosition(MoveAction move)
 	{
-		MoveAction move=LEFT;
-
-		switch(input)
+		switch(move)
 		{
 		case LEFT :
 			moveLeft();
 			break;
 		case RIGHT :
+			moveRight();
 			break;
 		case UP :
 			break;
 		case DOWN :
 			break;
 		default :
-			wcout<<L"정해지지않은입력:"<<input<<endl;
+			wcout<<L"정해지지않은움직임:"<<move<<endl;
 			wcin.get();
 		}
 	}
@@ -318,6 +346,7 @@ private :
 int main()
 {
 	wcout.imbue(locale("kor"));
+
 	Game game;
 	game.Start(8,10);
 	return 0;
