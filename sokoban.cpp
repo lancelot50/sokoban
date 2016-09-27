@@ -151,12 +151,12 @@ class Game
 	{
 		int m_PosIdx;
 		Player() :m_PosIdx(0) {}
-	public :
-		void SetPos(int PosIdx) { m_PosIdx = PosIdx;  }
+	public:
+		void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
 		int GetPos() const { return m_PosIdx; }
 	};
 
-public :
+public:
 	Game() : m_Storage(NULL), m_StorageWidth(0), m_StorageHeight(0), m_StorageSize(0) { }
 	void Start(int width, int height)
 	{
@@ -165,7 +165,7 @@ public :
 		terminate();
 	}
 
-private :
+private:
 
 	void terminate()
 	{
@@ -174,27 +174,27 @@ private :
 
 	void initialize(int Width, int Height)
 	{
-		m_Storage=new BlockType[Width*Height];
+		m_Storage = new BlockType[Width*Height];
 
-		m_StorageWidth=Width;
-		m_StorageHeight=Height;
+		m_StorageWidth = Width;
+		m_StorageHeight = Height;
 		m_StorageSize = Width*Height;
 
-		for(int i=0; i<Width; ++i)
+		for (int i = 0; i < Width; ++i)
 		{
-			for(int j=0; j<Height; ++j)
+			for (int j = 0; j < Height; ++j)
 			{
-				if(i==0 || j==0 || j==Height-1 || i==Width-1 )
-					m_Storage[i*Height+j]=WALL;
+				if (i == 0 || j == 0 || j == Height - 1 || i == Width - 1)
+					m_Storage[i*Height + j] = WALL;
 				else
-					m_Storage[i*Height+j]=EMPTY_SLOT;
+					m_Storage[i*Height + j] = EMPTY_SLOT;
 			}
 		}
 
 		int size = m_StorageWidth*m_StorageHeight;
-		
+
 		srand(static_cast<unsigned int>(time(NULL)));
-		int pos=rand() % size;
+		int pos = rand() % size;
 		if (m_Storage[pos] == EMPTY_SLOT)
 		{
 			m_Storage[pos] = PLAYER;
@@ -207,19 +207,19 @@ private :
 
 	void gameLoop()
 	{
-		while(true)
+		while (true)
 		{
 			draw();
-			wchar_t input=getInput();
-			if( input==L'q')
+			wchar_t input = getInput();
+			if (input == L'q')
 				break;
-			update(input);			
+			update(input);
 		}
 	}
 	wchar_t getInput()
 	{
-		wchar_t inputChar=0;
-		wcin>>inputChar;
+		wchar_t inputChar = 0;
+		wcin >> inputChar;
 		return inputChar;
 	}
 
@@ -240,7 +240,7 @@ private :
 		case 'x':
 			result = DOWN;
 			break;
-		default :
+		default:
 			wcout << L"정해지지않은입력:" << input << endl;
 			wcin.get();
 		}
@@ -254,63 +254,110 @@ private :
 		movePlayerPosition(move);
 	}
 
-	void moveLeft()
+	int findPlayerIndex() const
 	{
+		int playerIndex = 0;
 		for (int i = 0; i < m_StorageSize; ++i)
 		{
-			if (m_Storage[i] == PLAYER && i > 0 && m_Storage[i - 1] != WALL)
+			if (m_Storage[i] == PLAYER)
 			{
-				BlockType temp = m_Storage[i-1];
-				m_Storage[i - 1] = PLAYER;
-				m_Storage[i] = temp;
+				playerIndex = i;
 				break;
 			}
-			
 		}
-		wcout << L"왼쪽이동" << endl;
+
+		return playerIndex;
 	}
 
-	void moveRight()
+	void swapIndex(int PlayerIndex, int MovetoIndex) const
 	{
-		for (int i = 0; i < m_StorageSize; ++i)
-		{
-			if (m_Storage[i] == PLAYER && i > 0 && m_Storage[i + 1] != WALL)
-			{
-				BlockType temp = m_Storage[i + 1];
-				m_Storage[i + 1] = PLAYER;
-				m_Storage[i] = temp;
-				break;
-			}
-
-		}
-		wcout << L"오른쪽이동" << endl;
+		BlockType temp = m_Storage[MovetoIndex];
+		m_Storage[MovetoIndex] = PLAYER;
+		m_Storage[PlayerIndex] = temp;
 	}
+	void moveLeft(int PlayaerIndex)
+	{
+		int playerLeftIndex = PlayaerIndex - 1;
+		if (m_Storage[playerLeftIndex] == EMPTY_SLOT)
+		{
+			swapIndex(PlayaerIndex, playerLeftIndex);
+			wcout << L"왼쪽이동" << endl;
+		}
+		else
+			wcout << L"왼쪽이동불가" << endl;
+	}
+
+	void moveRight(int PlayerIndex)
+	{
+		int playerRightIndex = PlayerIndex + 1;
+		if (m_Storage[playerRightIndex] == EMPTY_SLOT)
+		{
+			swapIndex(PlayerIndex, playerRightIndex);
+			wcout << L"오른쪽이동" << endl;
+		}
+		else
+			wcout << L"오른쪽이동불가" << endl;
+
+	}
+	void moveUp(int PlayerIndex)
+	{
+		int playerUpIndex = PlayerIndex - m_StorageWidth - 2;
+		if (playerUpIndex > 0 && m_Storage[playerUpIndex] == EMPTY_SLOT)
+		{
+			swapIndex(PlayerIndex, playerUpIndex);
+			wcout << L"위쪽이동" << endl;
+		}
+		else
+			wcout << L"위쪽이동불가" << endl;
+
+	}
+	void moveDown(int PlayerIndex)
+	{
+		int playerDownIndex = PlayerIndex + m_StorageWidth + 2;
+		if (playerDownIndex < m_StorageSize && m_Storage[playerDownIndex] == EMPTY_SLOT)
+		{
+			swapIndex(PlayerIndex, playerDownIndex);
+			wcout << L"아래쪽이동" << endl;
+		}
+		else
+			wcout << L"아래쪽이동불가" << endl;
+	}
+
 
 
 	void movePlayerPosition(MoveAction move)
 	{
-		switch(move)
+		int playerIndex = findPlayerIndex();
+		switch (move)
 		{
-		case LEFT :
-			moveLeft();
+		case LEFT:
+			moveLeft(playerIndex);
 			break;
-		case RIGHT :
-			moveRight();
+		case RIGHT:
+			moveRight(playerIndex);
 			break;
-		case UP :
+		case UP:
+			moveUp(playerIndex);
 			break;
-		case DOWN :
+		case DOWN:
+			moveDown(playerIndex);
 			break;
-		default :
-			wcout<<L"정해지지않은움직임:"<<move<<endl;
+		default:
+			wcout << L"정해지지않은움직임:" << move << endl;
 			wcin.get();
 		}
 	}
-	
+
 	void draw()
 	{
 		clear();
+		drawPlayerIndex();
 		drawStorage();
+	}
+
+	void drawPlayerIndex() const
+	{
+		wcout << L"플레이어Index:" << findPlayerIndex() << endl<<endl;
 	}
 
 	void clear()
