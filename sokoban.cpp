@@ -301,7 +301,7 @@ private:
 	}
 	void moveUp(int PlayerIndex)
 	{
-		int playerUpIndex = PlayerIndex - m_StorageWidth - 2;
+		int playerUpIndex = PlayerIndex - m_StorageHeight;
 		if (playerUpIndex > 0 && m_Storage[playerUpIndex] == EMPTY_SLOT)
 		{
 			swapIndex(PlayerIndex, playerUpIndex);
@@ -313,7 +313,7 @@ private:
 	}
 	void moveDown(int PlayerIndex)
 	{
-		int playerDownIndex = PlayerIndex + m_StorageWidth + 2;
+		int playerDownIndex = PlayerIndex + m_StorageHeight;
 		if (playerDownIndex < m_StorageSize && m_Storage[playerDownIndex] == EMPTY_SLOT)
 		{
 			swapIndex(PlayerIndex, playerDownIndex);
@@ -351,13 +351,25 @@ private:
 	void draw()
 	{
 		clear();
-		drawPlayerIndex();
+		drawDebugInfo();
 		drawStorage();
+	}
+
+	void drawDebugInfo() const
+	{
+		drawPlayerIndex();
+		drawStorageInfo();
+		wcout << endl;
+	}
+
+	void drawStorageInfo() const
+	{
+		wcout << L"StorageWidth : " << m_StorageWidth << L", StorageHeight:" << m_StorageHeight << endl;
 	}
 
 	void drawPlayerIndex() const
 	{
-		wcout << L"플레이어Index:" << findPlayerIndex() << endl<<endl;
+		wcout << L"플레이어Index:" << findPlayerIndex() << endl;
 	}
 
 	void clear()
@@ -395,6 +407,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(8,10);
+	game.Start(16,8);
 	return 0;
 }
