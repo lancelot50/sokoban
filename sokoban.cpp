@@ -120,6 +120,7 @@ using namespace std;
 #include<stdlib.h>
 
 #include<locale>
+#include <assert.h>
 
 class Game
 {
@@ -132,39 +133,173 @@ class Game
 		HOLD
 	};
 
-	enum BlockType
-	{
-		WALL,
-		FREE_SLOT,
-		EMPTY_SLOT,
-		FILLED_SLOT,
-		PLAYER
-	};
-
-	class Player
-	{
-		int m_PosIdx;
-	public:
-		Player() :m_PosIdx(0) {}
-		void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
-		int GetPos() const { return m_PosIdx; }
-	};
-
 	class Storage
 	{
+		enum BlockType
+		{
+			WALL,
+			FREE_SLOT,
+			EMPTY_SLOT,
+			FILLED_SLOT,
+			PLAYER
+		};
 
+		class Player
+		{
+			int m_PosIdx;
+		public:
+			Player() :m_PosIdx(0) {}
+			void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
+			int GetPos() const { return m_PosIdx; }
+		};
+
+		BlockType* m_StorageArray;
+
+		int m_Width;
+		int m_Height;
+		int m_Size;
+
+		Player m_Player;
+
+	public :
+		Storage() : m_Width(0), m_Height(0), m_Size(0), m_StorageArray(0) {}
+		virtual ~Storage()
+		{
+			delete[] m_StorageArray;
+		}
+
+		int GetSize() const { return m_Size; }
+		int GetWidth() const { return m_Width; }
+		int GetHeight() const { return m_Height; }
+		int GetPlayerIndex() const { return m_Player.GetPos(); }
+
+		void Init(int Width, int Height)
+		{
+			m_Width = Width;
+			m_Height = Height;
+			m_Size = Width*Height;
+			m_StorageArray = new BlockType[m_Size];
+
+			for (int i = 0; i < Width; ++i)
+			{
+				for (int j = 0; j < Height; ++j)
+				{
+					assert(i*Height + j < m_Size);
+
+					if (i == 0 || j == 0 || j == Height - 1 || i == Width - 1)
+						m_StorageArray[i*Height + j] = WALL;
+					else
+						m_StorageArray[i*Height + j] = EMPTY_SLOT;
+				}
+			}
+		}
+
+		void InitPlayerIndex()
+		{
+			srand(static_cast<unsigned int>(time(NULL)));
+
+			int pos = rand() % m_Size;
+			if (m_StorageArray[pos] == EMPTY_SLOT)
+			{
+				m_StorageArray[pos] = PLAYER;
+			}
+			else if (pos < m_Width)
+				m_StorageArray[pos + m_Width] = PLAYER;
+			else if (pos > m_Size - m_Width)
+				m_StorageArray[pos - m_Width] = PLAYER;
+
+			m_Player.SetPos(pos);
+		}
+
+		void PlayerMoveLeft()
+		{
+			int playerLeftIndex = m_Player.GetPos() - 1;
+			if (m_StorageArray[playerLeftIndex] == EMPTY_SLOT)
+			{
+				swapIndex(m_Player.GetPos(), playerLeftIndex);
+				wcout << L"왼쪽이동" << endl;
+				m_Player.SetPos(playerLeftIndex);
+			}
+			else
+				wcout << L"왼쪽이동불가" << endl;
+		}
+
+		void PlayerMoveRight()
+		{
+			int playerRightIndex = m_Player.GetPos() + 1;
+			if (m_StorageArray[playerRightIndex] == EMPTY_SLOT)
+			{
+				swapIndex(m_Player.GetPos(), playerRightIndex);
+				wcout << L"오른쪽이동" << endl;
+				m_Player.SetPos(playerRightIndex);
+			}
+			else
+				wcout << L"오른쪽이동불가" << endl;
+
+		}
+		void PlayerMoveUp()
+		{
+			int playerUpIndex = m_Player.GetPos() - m_Height;
+			if (playerUpIndex > 0 && m_StorageArray[playerUpIndex] == EMPTY_SLOT)
+			{
+				swapIndex(m_Player.GetPos(), playerUpIndex);
+				wcout << L"위쪽이동" << endl;
+				m_Player.SetPos(playerUpIndex);
+			}
+			else
+				wcout << L"위쪽이동불가" << endl;
+
+		}
+		void PlayerMoveDown()
+		{
+			int playerDownIndex = m_Player.GetPos() + m_Height;
+			if (playerDownIndex < m_Size && m_StorageArray[playerDownIndex] == EMPTY_SLOT)
+			{
+				swapIndex(m_Player.GetPos(), playerDownIndex);
+				wcout << L"아래쪽이동" << endl;
+				m_Player.SetPos(playerDownIndex);
+			}
+			else
+				wcout << L"아래쪽이동불가" << endl;
+		}
+
+		void swapIndex(int PlayerIndex, int MovetoIndex) const
+		{
+			BlockType temp = m_StorageArray[MovetoIndex];
+			m_StorageArray[MovetoIndex] = PLAYER;
+			m_StorageArray[PlayerIndex] = temp;
+		}
+
+		void Draw() const
+		{
+			for (int i = 0; i<m_Width; ++i)
+			{
+				for (int j = 0; j<m_Height; ++j)
+				{
+					switch (m_StorageArray[i*m_Height + j])
+					{
+					case WALL:
+						wcout << L'|';
+						break;
+					case EMPTY_SLOT:
+						wcout << L'.';
+						break;
+					case PLAYER:
+						wcout << L'P';
+						break;
+					default:
+						break;
+					}
+				}
+				wcout << endl;
+			}
+		}
 	};
 
-	BlockType* m_Storage;
-
-	int m_StorageWidth;
-	int m_StorageHeight;
-	int m_StorageSize;
-
-	Player m_Player;
+	Storage m_Storage;
 
 public:
-	Game() : m_Storage(NULL), m_StorageWidth(0), m_StorageHeight(0), m_StorageSize(0) { }
+	Game() { }
 	void Start(int width, int height)
 	{
 		initialize(width, height);
@@ -174,49 +309,12 @@ public:
 
 private:
 
-	void terminate()
-	{
-		delete[] m_Storage;
-	}
+	void terminate() {	}
 
 	void initialize(int Width, int Height)
 	{
-		m_Storage = new BlockType[Width*Height];
-
-		m_StorageWidth = Width;
-		m_StorageHeight = Height;
-		m_StorageSize = Width*Height;
-
-		for (int i = 0; i < Width; ++i)
-		{
-			for (int j = 0; j < Height; ++j)
-			{
-				if (i == 0 || j == 0 || j == Height - 1 || i == Width - 1)
-					m_Storage[i*Height + j] = WALL;
-				else
-					m_Storage[i*Height + j] = EMPTY_SLOT;
-			}
-		}
-
-		initPlayerIndex();
-	}
-
-	void initPlayerIndex()
-	{
-		int size = m_StorageWidth*m_StorageHeight;
-
-		srand(static_cast<unsigned int>(time(NULL)));
-		int pos = rand() % size;
-		if (m_Storage[pos] == EMPTY_SLOT)
-		{
-			m_Storage[pos] = PLAYER;
-		}
-		else if (pos < m_StorageWidth)
-			m_Storage[pos + m_StorageWidth] = PLAYER;
-		else if (pos > size - m_StorageWidth)
-			m_Storage[pos - m_StorageWidth] = PLAYER;
-
-		m_Player.SetPos(pos);
+		m_Storage.Init(Width, Height);
+		m_Storage.InitPlayerIndex();
 	}
 
 	void gameLoop()
@@ -268,93 +366,21 @@ private:
 		movePlayerPosition(move);
 	}
 
-	int findPlayerIndex() const
-	{
-		int playerIndex = 0;
-		for (int i = 0; i < m_StorageSize; ++i)
-		{
-			if (m_Storage[i] == PLAYER)
-			{
-				playerIndex = i;
-				break;
-			}
-		}
-
-		return playerIndex;
-	}
-
-	void swapIndex(int PlayerIndex, int MovetoIndex) const
-	{
-		BlockType temp = m_Storage[MovetoIndex];
-		m_Storage[MovetoIndex] = PLAYER;
-		m_Storage[PlayerIndex] = temp;
-	}
-	void moveLeft(int PlayaerIndex)
-	{
-		int playerLeftIndex = PlayaerIndex - 1;
-		if (m_Storage[playerLeftIndex] == EMPTY_SLOT)
-		{
-			swapIndex(PlayaerIndex, playerLeftIndex);
-			wcout << L"왼쪽이동" << endl;
-		}
-		else
-			wcout << L"왼쪽이동불가" << endl;
-	}
-
-	void moveRight(int PlayerIndex)
-	{
-		int playerRightIndex = PlayerIndex + 1;
-		if (m_Storage[playerRightIndex] == EMPTY_SLOT)
-		{
-			swapIndex(PlayerIndex, playerRightIndex);
-			wcout << L"오른쪽이동" << endl;
-		}
-		else
-			wcout << L"오른쪽이동불가" << endl;
-
-	}
-	void moveUp(int PlayerIndex)
-	{
-		int playerUpIndex = PlayerIndex - m_StorageHeight;
-		if (playerUpIndex > 0 && m_Storage[playerUpIndex] == EMPTY_SLOT)
-		{
-			swapIndex(PlayerIndex, playerUpIndex);
-			wcout << L"위쪽이동" << endl;
-		}
-		else
-			wcout << L"위쪽이동불가" << endl;
-
-	}
-	void moveDown(int PlayerIndex)
-	{
-		int playerDownIndex = PlayerIndex + m_StorageHeight;
-		if (playerDownIndex < m_StorageSize && m_Storage[playerDownIndex] == EMPTY_SLOT)
-		{
-			swapIndex(PlayerIndex, playerDownIndex);
-			wcout << L"아래쪽이동" << endl;
-		}
-		else
-			wcout << L"아래쪽이동불가" << endl;
-	}
-
-
-
 	void movePlayerPosition(MoveAction move)
 	{
-		int playerIndex = findPlayerIndex();
 		switch (move)
 		{
 		case LEFT:
-			moveLeft(playerIndex);
+			m_Storage.PlayerMoveLeft();
 			break;
 		case RIGHT:
-			moveRight(playerIndex);
+			m_Storage.PlayerMoveRight();
 			break;
 		case UP:
-			moveUp(playerIndex);
+			m_Storage.PlayerMoveUp();
 			break;
 		case DOWN:
-			moveDown(playerIndex);
+			m_Storage.PlayerMoveDown();
 			break;
 		default:
 			wcout << L"정해지지않은움직임:" << move << endl;
@@ -366,7 +392,7 @@ private:
 	{
 		clear();
 		drawDebugInfo();
-		drawStorage();
+		m_Storage.Draw();
 	}
 
 	void drawDebugInfo() const
@@ -378,41 +404,17 @@ private:
 
 	void drawStorageInfo() const
 	{
-		wcout << L"StorageWidth : " << m_StorageWidth << L", StorageHeight:" << m_StorageHeight << endl;
+		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << endl;
 	}
 
 	void drawPlayerIndex() const
 	{
-		wcout << L"플레이어Index:" << findPlayerIndex() << endl;
+		wcout << L"플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
 	}
 
 	void clear()
 	{
 		system("cls");
-	}
-	void drawStorage()
-	{
-		for(int i=0; i<m_StorageWidth; ++i)
-		{
-			for(int j=0; j<m_StorageHeight; ++j)
-			{
-				switch(m_Storage[i*m_StorageHeight+j])
-				{
-				case WALL :
-					wcout<<L'|';
-					break;
-				case EMPTY_SLOT :
-					wcout<<L'.';
-					break;
-				case PLAYER :
-					wcout << L'P';
-					break;
-				default:
-					break;
-				}
-			}
-			wcout<<endl;
-		}
 	}
 };
 
