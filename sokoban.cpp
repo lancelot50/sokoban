@@ -138,10 +138,13 @@ class Game
 		enum BlockType
 		{
 			WALL,
-			FREE_SLOT,
 			EMPTY_SLOT,
-			FILLED_SLOT,
-			PLAYER
+			FREE_GOAL,
+			FILLED_GOAL,
+			BOX,
+			BOX_ON_THE_GOAL,
+			PLAYER,
+			PLAYER_ON_THE_GOAL
 		};
 
 		class Player
@@ -160,6 +163,43 @@ class Game
 		int m_Size;
 
 		Player m_Player;
+
+		void createWall()
+		{
+			for (int i = 0; i < m_Width; ++i)
+			{
+				for (int j = 0; j < m_Height; ++j)
+				{
+					assert(i*m_Height + j < m_Size);		// code analysis 오류나서
+
+					if (i == 0 || j == 0 || j == m_Height - 1 || i == m_Width - 1)
+						m_StorageArray[i*m_Height + j] = WALL;
+					else
+						m_StorageArray[i*m_Height + j] = EMPTY_SLOT;
+				}
+			}
+		}
+
+		void loadBox()
+		{
+			for (int i = 0; i < m_Width; ++i)
+			{
+				for (int j = 0; j < m_Height; ++j)
+				{
+					assert(i*m_Height + j < m_Size);		// code analysis 오류나서
+
+					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 10 == 0)
+					{
+						m_StorageArray[i*m_Height + j] = BOX;
+					}
+				}
+			}
+		}
+
+		void loadGoal()
+		{
+
+		}
 
 	public :
 		Storage() : m_Width(0), m_Height(0), m_Size(0), m_StorageArray(0) {}
@@ -180,18 +220,9 @@ class Game
 			m_Size = Width*Height;
 			m_StorageArray = new BlockType[m_Size];
 
-			for (int i = 0; i < Width; ++i)
-			{
-				for (int j = 0; j < Height; ++j)
-				{
-					assert(i*Height + j < m_Size);
-
-					if (i == 0 || j == 0 || j == Height - 1 || i == Width - 1)
-						m_StorageArray[i*Height + j] = WALL;
-					else
-						m_StorageArray[i*Height + j] = EMPTY_SLOT;
-				}
-			}
+			createWall();
+			loadBox();
+			loadGoal();
 		}
 
 		void InitPlayerIndex()
@@ -282,9 +313,21 @@ class Game
 						wcout << L'|';
 						break;
 					case EMPTY_SLOT:
+						wcout << L' ';
+						break;
+					case GOAL:
 						wcout << L'.';
 						break;
+					case BOX:
+						wcout << L'o';
+						break;
+					case BOX_ON_THE_GOAL:
+						wcout << L'O';
+						break;
 					case PLAYER:
+						wcout << L'p';
+						break;
+					case PLAYER_ON_THE_GOAL:
 						wcout << L'P';
 						break;
 					default:
