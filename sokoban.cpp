@@ -141,20 +141,27 @@ class Game
 		PLAYER
 	};
 
+	class Player
+	{
+		int m_PosIdx;
+	public:
+		Player() :m_PosIdx(0) {}
+		void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
+		int GetPos() const { return m_PosIdx; }
+	};
+
+	class Storage
+	{
+
+	};
+
 	BlockType* m_Storage;
 
 	int m_StorageWidth;
 	int m_StorageHeight;
 	int m_StorageSize;
 
-	class Player
-	{
-		int m_PosIdx;
-		Player() :m_PosIdx(0) {}
-	public:
-		void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
-		int GetPos() const { return m_PosIdx; }
-	};
+	Player m_Player;
 
 public:
 	Game() : m_Storage(NULL), m_StorageWidth(0), m_StorageHeight(0), m_StorageSize(0) { }
@@ -191,6 +198,11 @@ private:
 			}
 		}
 
+		initPlayerIndex();
+	}
+
+	void initPlayerIndex()
+	{
 		int size = m_StorageWidth*m_StorageHeight;
 
 		srand(static_cast<unsigned int>(time(NULL)));
@@ -203,6 +215,8 @@ private:
 			m_Storage[pos + m_StorageWidth] = PLAYER;
 		else if (pos > size - m_StorageWidth)
 			m_Storage[pos - m_StorageWidth] = PLAYER;
+
+		m_Player.SetPos(pos);
 	}
 
 	void gameLoop()
