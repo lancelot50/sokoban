@@ -139,8 +139,7 @@ class Game
 		{
 			WALL,
 			EMPTY_SLOT,
-			FREE_GOAL,
-			FILLED_GOAL,
+			GOAL,
 			BOX,
 			BOX_ON_THE_GOAL,
 			PLAYER,
