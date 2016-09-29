@@ -160,6 +160,7 @@ class Game
 		int m_Width;
 		int m_Height;
 		int m_Size;
+		int m_BoxCnt;
 
 		Player m_Player;
 
@@ -190,6 +191,7 @@ class Game
 					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 10 == 0)
 					{
 						m_StorageArray[i*m_Height + j] = BOX;
+						++m_BoxCnt;
 					}
 				}
 			}
@@ -197,11 +199,19 @@ class Game
 
 		void loadGoal()
 		{
-
+			while (m_BoxCnt >= 0)
+			{
+				int index = rand() % m_Size;
+				if (m_StorageArray[index] == EMPTY_SLOT)
+				{ 
+					m_StorageArray[index] = GOAL;
+					--m_BoxCnt;
+				}
+			}
 		}
 
 	public :
-		Storage() : m_Width(0), m_Height(0), m_Size(0), m_StorageArray(0) {}
+		Storage() : m_Width(0), m_Height(0), m_Size(0), m_StorageArray(0),m_BoxCnt(0) {}
 		virtual ~Storage()
 		{
 			delete[] m_StorageArray;
@@ -228,17 +238,16 @@ class Game
 		{
 			srand(static_cast<unsigned int>(time(NULL)));
 
-			int pos = rand() % m_Size;
-			if (m_StorageArray[pos] == EMPTY_SLOT)
+			while (true)
 			{
-				m_StorageArray[pos] = PLAYER;
+				int pos = rand() % m_Size;
+				if (m_StorageArray[pos] == EMPTY_SLOT)
+				{
+					m_StorageArray[pos] = PLAYER;
+					m_Player.SetPos(pos);
+					break;
+				}
 			}
-			else if (pos < m_Width)
-				m_StorageArray[pos + m_Width] = PLAYER;
-			else if (pos > m_Size - m_Width)
-				m_StorageArray[pos - m_Width] = PLAYER;
-
-			m_Player.SetPos(pos);
 		}
 
 		void PlayerMoveLeft()
