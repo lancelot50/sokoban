@@ -143,7 +143,7 @@ class Game
 			BOX,
 			BOX_ON_THE_GOAL,
 			PLAYER,
-			PLAYER_ON_THE_GOAL
+			PLAYER_ON_THE_GOAL,
 		};
 
 		class Player
@@ -250,10 +250,18 @@ class Game
 			}
 		}
 
+		bool IsMovableBlock(BlockType Block) const
+		{
+			if (Block == EMPTY_SLOT || Block == GOAL )
+				return true;
+			else
+				return false;
+		}
+
 		void PlayerMoveLeft()
 		{
 			int playerLeftIndex = m_Player.GetPos() - 1;
-			if (m_StorageArray[playerLeftIndex] == EMPTY_SLOT)
+			if ( IsMovableBlock(m_StorageArray[playerLeftIndex]) )
 			{
 				swapIndex(m_Player.GetPos(), playerLeftIndex);
 				wcout << L"왼쪽이동" << endl;
@@ -283,6 +291,9 @@ class Game
 			{
 				swapIndex(m_Player.GetPos(), playerUpIndex);
 				wcout << L"위쪽이동" << endl;
+
+				
+
 				m_Player.SetPos(playerUpIndex);
 			}
 			else
@@ -305,7 +316,7 @@ class Game
 		void swapIndex(int PlayerIndex, int MovetoIndex) const
 		{
 			BlockType temp = m_StorageArray[MovetoIndex];
-			m_StorageArray[MovetoIndex] = PLAYER;
+			m_StorageArray[MovetoIndex] = m_StorageArray[PlayerIndex];
 			m_StorageArray[PlayerIndex] = temp;
 		}
 
