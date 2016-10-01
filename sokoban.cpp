@@ -258,59 +258,61 @@ class Game
 				return false;
 		}
 
+		void processPlayerMove(int PlayerDestIndex)
+		{
+			if ( PlayerDestIndex > 0 && PlayerDestIndex < m_Size && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
+			{
+				switch (m_StorageArray[m_Player.GetPos()])
+				{
+				case PLAYER:
+					m_StorageArray[m_Player.GetPos()] = EMPTY_SLOT;
+					break;
+				case PLAYER_ON_THE_GOAL:
+					m_StorageArray[m_Player.GetPos()] = GOAL;
+					break;
+				}
+
+				switch (m_StorageArray[PlayerDestIndex])
+				{
+				case EMPTY_SLOT:
+					//swapIndex(m_Player.GetPos(), playerDestIndex);
+					m_StorageArray[PlayerDestIndex] = PLAYER;
+					break;
+				case GOAL:
+					m_StorageArray[PlayerDestIndex] = PLAYER_ON_THE_GOAL;
+					break;
+				default:
+					break;
+				}
+				m_Player.SetPos(PlayerDestIndex);
+
+				wcout << L"이동" << endl;
+			}
+			else
+				wcout << L"이동불가" << endl;
+		}
+
 		void PlayerMoveLeft()
 		{
 			int playerLeftIndex = m_Player.GetPos() - 1;
-			if ( IsMovableBlock(m_StorageArray[playerLeftIndex]) )
-			{
-				swapIndex(m_Player.GetPos(), playerLeftIndex);
-				wcout << L"왼쪽이동" << endl;
-				m_Player.SetPos(playerLeftIndex);
-			}
-			else
-				wcout << L"왼쪽이동불가" << endl;
+			processPlayerMove(playerLeftIndex);
 		}
 
 		void PlayerMoveRight()
 		{
 			int playerRightIndex = m_Player.GetPos() + 1;
-			if (m_StorageArray[playerRightIndex] == EMPTY_SLOT)
-			{
-				swapIndex(m_Player.GetPos(), playerRightIndex);
-				wcout << L"오른쪽이동" << endl;
-				m_Player.SetPos(playerRightIndex);
-			}
-			else
-				wcout << L"오른쪽이동불가" << endl;
-
+			processPlayerMove(playerRightIndex);
 		}
 		void PlayerMoveUp()
 		{
 			int playerUpIndex = m_Player.GetPos() - m_Height;
-			if (playerUpIndex > 0 && m_StorageArray[playerUpIndex] == EMPTY_SLOT)
-			{
-				swapIndex(m_Player.GetPos(), playerUpIndex);
-				wcout << L"위쪽이동" << endl;
 
-				
-
-				m_Player.SetPos(playerUpIndex);
-			}
-			else
-				wcout << L"위쪽이동불가" << endl;
-
+			processPlayerMove(playerUpIndex);
 		}
 		void PlayerMoveDown()
 		{
 			int playerDownIndex = m_Player.GetPos() + m_Height;
-			if (playerDownIndex < m_Size && m_StorageArray[playerDownIndex] == EMPTY_SLOT)
-			{
-				swapIndex(m_Player.GetPos(), playerDownIndex);
-				wcout << L"아래쪽이동" << endl;
-				m_Player.SetPos(playerDownIndex);
-			}
-			else
-				wcout << L"아래쪽이동불가" << endl;
+			processPlayerMove(playerDownIndex);
 		}
 
 		void swapIndex(int PlayerIndex, int MovetoIndex) const
