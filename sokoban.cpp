@@ -258,17 +258,9 @@ class Game
 				return false;
 		}
 
-		bool IsValidIndex(int PlayerDestIndex)
-		{
-			if (PlayerDestIndex > 0 && PlayerDestIndex < m_Size)
-				return true;
-			else
-				return false;
-		}
-
 		void processPlayerMove(int PlayerDestIndex)
 		{
-			if ( IsValidIndex(PlayerDestIndex) && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
+			if ( PlayerDestIndex > 0 && PlayerDestIndex < m_Size && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
 			{
 				switch (m_StorageArray[m_Player.GetPos()])
 				{
@@ -302,6 +294,15 @@ class Game
 
 		void PlayerMoveLeft()
 		{
+			// 1. 플레이어가 왼쪽으로 이동가능한가?
+			//		왼쪽에 박스가 있나?
+			//			박스가 왼쪽으로 이동가능한가?
+			//				가능하다면 박스를 이동
+			//				플레이어도 이동
+			//				불가능하다면 박스이동불가
+			//				플레이어도 이동불가.
+
+
 			int playerLeftIndex = m_Player.GetPos() - 1;
 			processPlayerMove(playerLeftIndex);
 		}
@@ -311,30 +312,11 @@ class Game
 			int playerRightIndex = m_Player.GetPos() + 1;
 			processPlayerMove(playerRightIndex);
 		}
-
-		void processMoveUp(int SrcIndex, int DestIndex)
-		{
-			if (IsValidIndex(SrcIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
-			{
-				if (m_StorageArray[SrcIndex] == PLAYER && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
-				{
-					processMoveUp(DestIndex, DestIndex - m_Height);
-				}
-
-//				m_StorageArray[Src]
-
-			}
-		}
-
 		void PlayerMoveUp()
 		{
 			int playerUpIndex = m_Player.GetPos() - m_Height;
-	//		processPlayerMove(playerUpIndex);
 
-			int srcIndex = m_Player.GetPos();
-			int destIndex = playerUpIndex;
-
-			processMoveUp(srcIndex, destIndex);
+			processPlayerMove(playerUpIndex);
 		}
 		void PlayerMoveDown()
 		{
@@ -514,6 +496,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(16,8);
+	game.Start(8,8);
 	return 0;
 }
