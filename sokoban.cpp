@@ -302,6 +302,14 @@ class Game
 
 		void PlayerMoveLeft()
 		{
+			// 1. 플레이어가 왼쪽으로 이동가능한가?
+			//		왼쪽에 박스가 있나?
+			//			박스가 왼쪽으로 이동가능한가?
+			//				가능하다면 박스를 이동
+			//				플레이어도 이동
+			//				불가능하다면 박스이동불가
+			//				플레이어도 이동불가.
+
 			int playerLeftIndex = m_Player.GetPos() - 1;
 			processPlayerMove(playerLeftIndex);
 		}
@@ -514,6 +522,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(16,8);
+	game.Start(8,8);
 	return 0;
 }
