@@ -258,9 +258,17 @@ class Game
 				return false;
 		}
 
+		bool IsValidIndex(int PlayerDestIndex)
+		{
+			if (PlayerDestIndex > 0 && PlayerDestIndex < m_Size)
+				return true;
+			else
+				return false;
+		}
+
 		void processPlayerMove(int PlayerDestIndex)
 		{
-			if ( PlayerDestIndex > 0 && PlayerDestIndex < m_Size && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
+			if ( IsValidIndex(PlayerDestIndex) && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
 			{
 				switch (m_StorageArray[m_Player.GetPos()])
 				{
@@ -312,11 +320,30 @@ class Game
 			int playerRightIndex = m_Player.GetPos() + 1;
 			processPlayerMove(playerRightIndex);
 		}
+
+		void processMoveUp(int SrcIndex, int DestIndex)
+		{
+			if (IsValidIndex(SrcIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
+			{
+				if (m_StorageArray[SrcIndex] == PLAYER && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
+				{
+					processMoveUp(DestIndex, DestIndex - m_Height);
+				}
+
+//				m_StorageArray[Src]
+
+			}
+		}
+
 		void PlayerMoveUp()
 		{
 			int playerUpIndex = m_Player.GetPos() - m_Height;
+	//		processPlayerMove(playerUpIndex);
 
-			processPlayerMove(playerUpIndex);
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerUpIndex;
+
+			processMoveUp(srcIndex, destIndex);
 		}
 		void PlayerMoveDown()
 		{
