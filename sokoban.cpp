@@ -309,8 +309,6 @@ class Game
 			//				플레이어도 이동
 			//				불가능하다면 박스이동불가
 			//				플레이어도 이동불가.
-
-
 			int playerLeftIndex = m_Player.GetPos() - 1;
 			processPlayerMove(playerLeftIndex);
 		}
