@@ -311,6 +311,7 @@ class Game
 			//				플레이어도 이동불가.
 			int playerLeftIndex = m_Player.GetPos() - 1;
 			processPlayerMove(playerLeftIndex);
+
 		}
 
 		void PlayerMoveRight()
