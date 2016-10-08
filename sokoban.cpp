@@ -188,7 +188,7 @@ class Game
 				{
 					assert(i*m_Height + j < m_Size);		// code analysis 오류나서
 
-					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 10 == 0)
+					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 20 == 0)
 					{
 						m_StorageArray[i*m_Height + j] = BOX;
 						++m_BoxCnt;
@@ -199,13 +199,14 @@ class Game
 
 		void loadGoal()
 		{
-			while (m_BoxCnt >= 0)
+			int createBox = m_BoxCnt;
+			while (createBox > 0)
 			{
 				int index = rand() % m_Size;
 				if (m_StorageArray[index] == EMPTY_SLOT)
 				{ 
 					m_StorageArray[index] = GOAL;
-					--m_BoxCnt;
+					--createBox;
 				}
 			}
 		}
@@ -221,6 +222,7 @@ class Game
 		int GetWidth() const { return m_Width; }
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
+		int GetBoxCnt() const { return m_BoxCnt;  }
 
 		void Init(int Width, int Height)
 		{
@@ -236,8 +238,6 @@ class Game
 
 		void InitPlayerIndex()
 		{
-			srand(static_cast<unsigned int>(time(NULL)));
-
 			while (true)
 			{
 				int pos = rand() % m_Size;
@@ -252,7 +252,7 @@ class Game
 
 		bool IsMovableBlock(BlockType Block) const
 		{
-			if (Block == EMPTY_SLOT || Block == GOAL )
+			if (Block == EMPTY_SLOT || Block == GOAL || Block == BOX || Block== BOX_ON_THE_GOAL )
 				return true;
 			else
 				return false;
@@ -324,16 +324,44 @@ class Game
 
 		void processMoveUp(int SrcIndex, int DestIndex)
 		{
-			if (IsValidIndex(SrcIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
+			if (IsValidIndex(DestIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
 			{
-				if (m_StorageArray[SrcIndex] == PLAYER && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
+				if ( (m_StorageArray[SrcIndex] == PLAYER || m_StorageArray[SrcIndex] == PLAYER_ON_THE_GOAL) && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
 				{
-					processMoveUp(DestIndex, DestIndex - m_Height);
+					processMoveUp(DestIndex, DestIndex + (DestIndex-SrcIndex) );
 				}
+				else
+				{
+					if (m_StorageArray[SrcIndex] == PLAYER || m_StorageArray[SrcIndex] == BOX )
+					{
+						m_StorageArray[SrcIndex] = EMPTY_SLOT;
+					}
+					else if (m_StorageArray[SrcIndex] == PLAYER_ON_THE_GOAL || m_StorageArray[SrcIndex] == BOX_ON_THE_GOAL)
+					{
+						m_StorageArray[SrcIndex] = GOAL;
+					}
 
-//				m_StorageArray[Src]
-
+					if (m_StorageArray[DestIndex] == GOAL)
+					{
+						m_StorageArray[DestIndex] = PLAYER_ON_THE_GOAL;
+					}
+					else
+					{
+						if (m_StorageArray[DestIndex] == EMPTY_SLOT)
+						{
+							m_StorageArray[DestIndex] = m_StorageArray[SrcIndex];
+						}
+					}
+					
+					if(m_StorageArray[DestIndex]== PLAYER || m_StorageArray[DestIndex] == PLAYER_ON_THE_GOAL )
+						m_Player.SetPos(DestIndex);
+				}
 			}
+			else
+			{
+				wcout << L"processMoveUp() 실패" << endl;
+			}
+
 		}
 
 		void PlayerMoveUp()
@@ -414,6 +442,7 @@ private:
 
 	void initialize(int Width, int Height)
 	{
+		srand(static_cast<unsigned int>(time(NULL)));
 		m_Storage.Init(Width, Height);
 		m_Storage.InitPlayerIndex();
 	}
@@ -491,7 +520,7 @@ private:
 
 	void draw()
 	{
-		clear();
+		clearScreen();
 		drawDebugInfo();
 		m_Storage.Draw();
 	}
@@ -505,7 +534,7 @@ private:
 
 	void drawStorageInfo() const
 	{
-		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << endl;
+		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << ",  BoxCnt:"<<m_Storage.GetBoxCnt() << endl;
 	}
 
 	void drawPlayerIndex() const
@@ -513,7 +542,7 @@ private:
 		wcout << L"플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
 	}
 
-	void clear()
+	void clearScreen()
 	{
 		system("cls");
 	}
