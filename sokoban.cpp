@@ -312,6 +312,8 @@ class Game
 
 			int playerLeftIndex = m_Player.GetPos() - 1;
 			processPlayerMove(playerLeftIndex);
+
+			//test merge
 		}
 
 		void PlayerMoveRight()
