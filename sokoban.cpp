@@ -137,13 +137,13 @@ class Game
 	{
 		enum BlockType
 		{
-			WALL,
-			EMPTY_SLOT,
-			GOAL,
-			BOX,
-			BOX_ON_THE_GOAL,
-			PLAYER,
-			PLAYER_ON_THE_GOAL,
+			EMPTY_SLOT			= 0x00000000,
+			WALL				= 0x00000001,
+			GOAL				= 0x00000002,
+			BOX					= 0x00000004,
+			PLAYER				= 0x00000008,
+			BOX_ON_THE_GOAL		= BOX | GOAL,
+			PLAYER_ON_THE_GOAL	= PLAYER | GOAL,
 		};
 
 		class Player
@@ -322,38 +322,45 @@ class Game
 			processPlayerMove(playerRightIndex);
 		}
 
+		bool blockHasPlayer(int Index) const
+		{
+			if (m_StorageArray[Index] & PLAYER)
+				return true;
+			else
+				return false;
+		}
+
+		bool blockHasBox(int Index) const
+		{
+			if (m_StorageArray[Index] & BOX)
+				return true;
+			else
+				return false;
+
+		}
+
 		void processMoveUp(int SrcIndex, int DestIndex)
 		{
 			if (IsValidIndex(DestIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
 			{
-				if ( (m_StorageArray[SrcIndex] == PLAYER || m_StorageArray[SrcIndex] == PLAYER_ON_THE_GOAL) && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
+				if (  blockHasPlayer(SrcIndex) && blockHasBox(DestIndex) )
 				{
 					processMoveUp(DestIndex, DestIndex + (DestIndex-SrcIndex) );
 				}
-				else
+//				else
 				{
-					if (m_StorageArray[SrcIndex] == PLAYER || m_StorageArray[SrcIndex] == BOX )
+					if (blockHasPlayer(SrcIndex) )
 					{
-						m_StorageArray[SrcIndex] = EMPTY_SLOT;
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex]^PLAYER);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
 					}
-					else if (m_StorageArray[SrcIndex] == PLAYER_ON_THE_GOAL || m_StorageArray[SrcIndex] == BOX_ON_THE_GOAL)
+					else if (blockHasBox(SrcIndex) )
 					{
-						m_StorageArray[SrcIndex] = GOAL;
-					}
-
-					if (m_StorageArray[DestIndex] == GOAL)
-					{
-						m_StorageArray[DestIndex] = PLAYER_ON_THE_GOAL;
-					}
-					else
-					{
-						if (m_StorageArray[DestIndex] == EMPTY_SLOT)
-						{
-							m_StorageArray[DestIndex] = m_StorageArray[SrcIndex];
-						}
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ BOX);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ BOX);
 					}
 					
-					if(m_StorageArray[DestIndex]== PLAYER || m_StorageArray[DestIndex] == PLAYER_ON_THE_GOAL )
+					if(blockHasPlayer(DestIndex) )
 						m_Player.SetPos(DestIndex);
 				}
 			}
