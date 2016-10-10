@@ -144,6 +144,7 @@ class Game
 			PLAYER				= 0x00000008,
 			BOX_ON_THE_GOAL		= BOX | GOAL,
 			PLAYER_ON_THE_GOAL	= PLAYER | GOAL,
+
 		};
 
 		class Player
