@@ -252,10 +252,22 @@ class Game
 
 		bool IsMovableBlock(BlockType Block) const
 		{
-			if (Block == EMPTY_SLOT || Block == GOAL )
+			if (Block == EMPTY_SLOT)
+			{
+				wcout << L"EMPTY_SLOT" << endl;
 				return true;
+			}
+			if( Block == GOAL )
+			{
+				wcout << L"GOAL" << endl;
+				return true;
+			}
 			else
+			{
+				wcout << L"이동불가블록" << endl;
 				return false;
+			}
+
 		}
 
 		bool IsValidIndex(int PlayerDestIndex)
@@ -320,17 +332,52 @@ class Game
 			processPlayerMove(playerRightIndex);
 		}
 
+		bool blockHasPlayer(int Index) const
+		{
+			if (m_StorageArray[Index] & PLAYER)
+				return true;
+			else
+				return false;
+		}
+
+		bool blockHasBox(int Index) const
+		{
+			if (m_StorageArray[Index] & BOX)
+				return true;
+			else
+				return false;
+
+		}
+
 		void processMoveUp(int SrcIndex, int DestIndex)
 		{
 			if (IsValidIndex(SrcIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
 			{
-				if (m_StorageArray[SrcIndex] == PLAYER && (m_StorageArray[DestIndex] == BOX || m_StorageArray[DestIndex] == BOX_ON_THE_GOAL) )
+				if (  blockHasPlayer(SrcIndex) && blockHasBox(DestIndex) )
 				{
 					processMoveUp(DestIndex, DestIndex - m_Height);
 				}
 
-//				m_StorageArray[Src]
-
+//				else
+				{
+					if (blockHasPlayer(SrcIndex) )
+					{
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex]^PLAYER);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+					}
+					else if (blockHasBox(SrcIndex) )
+					{
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ BOX);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ BOX);
+					}
+					
+					if(blockHasPlayer(DestIndex) )
+						m_Player.SetPos(DestIndex);
+				}
+			}
+			else
+			{
+				wcout << L"processMoveUp() 실패" << endl;
 			}
 		}
 
@@ -425,6 +472,8 @@ private:
 			if (input == L'q')
 				break;
 			update(input);
+			wcin.get();
+			wcin.get();
 		}
 	}
 	wchar_t getInput()
