@@ -137,13 +137,13 @@ class Game
 	{
 		enum BlockType
 		{
-			WALL,
-			EMPTY_SLOT,
-			GOAL,
-			BOX,
-			BOX_ON_THE_GOAL,
-			PLAYER,
-			PLAYER_ON_THE_GOAL,
+			EMPTY_SLOT			= 0x00000000,
+			WALL				= 0x00000001,
+			GOAL				= 0x00000002,
+			BOX					= 0x00000004,
+			PLAYER				= 0x00000008,
+			BOX_ON_THE_GOAL		= BOX | GOAL,
+			PLAYER_ON_THE_GOAL	= PLAYER | GOAL,
 		};
 
 		class Player
