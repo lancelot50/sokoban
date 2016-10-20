@@ -164,6 +164,8 @@ class Game
 
 		Player m_Player;
 
+		wstring m_PrevFrameLog;
+
 		void createWall()
 		{
 			for (int i = 0; i < m_Width; ++i)
@@ -221,6 +223,8 @@ class Game
 		int GetWidth() const { return m_Width; }
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
+		wstring GetPrevFrameLog() const { return m_PrevFrameLog;  }
+		void ClearLog() { m_PrevFrameLog.clear();  }
 
 		void Init(int Width, int Height)
 		{
@@ -236,8 +240,6 @@ class Game
 
 		void InitPlayerIndex()
 		{
-			srand(static_cast<unsigned int>(time(NULL)));
-
 			while (true)
 			{
 				int pos = rand() % m_Size;
@@ -262,6 +264,11 @@ class Game
 				wcout << L"GOAL" << endl;
 				return true;
 			}
+			if (Block == BOX)
+			{
+				wcout << L"BOX" << endl;
+				return true;
+			}
 			else
 			{
 				wcout << L"이동불가블록" << endl;
@@ -277,61 +284,7 @@ class Game
 			else
 				return false;
 		}
-
-		void processPlayerMove(int PlayerDestIndex)
-		{
-			if ( IsValidIndex(PlayerDestIndex) && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
-			{
-				switch (m_StorageArray[m_Player.GetPos()])
-				{
-				case PLAYER:
-					m_StorageArray[m_Player.GetPos()] = EMPTY_SLOT;
-					break;
-				case PLAYER_ON_THE_GOAL:
-					m_StorageArray[m_Player.GetPos()] = GOAL;
-					break;
-				}
-
-				switch (m_StorageArray[PlayerDestIndex])
-				{
-				case EMPTY_SLOT:
-					//swapIndex(m_Player.GetPos(), playerDestIndex);
-					m_StorageArray[PlayerDestIndex] = PLAYER;
-					break;
-				case GOAL:
-					m_StorageArray[PlayerDestIndex] = PLAYER_ON_THE_GOAL;
-					break;
-				default:
-					break;
-				}
-				m_Player.SetPos(PlayerDestIndex);
-
-				wcout << L"이동" << endl;
-			}
-			else
-				wcout << L"이동불가" << endl;
-		}
-
-		void PlayerMoveLeft()
-		{
-			// 1. 플레이어가 왼쪽으로 이동가능한가?
-			//		왼쪽에 박스가 있나?
-			//			박스가 왼쪽으로 이동가능한가?
-			//				가능하다면 박스를 이동
-			//				플레이어도 이동
-			//				불가능하다면 박스이동불가
-			//				플레이어도 이동불가.
-			int playerLeftIndex = m_Player.GetPos() - 1;
-			processPlayerMove(playerLeftIndex);
-
-		}
-
-		void PlayerMoveRight()
-		{
-			int playerRightIndex = m_Player.GetPos() + 1;
-			processPlayerMove(playerRightIndex);
-		}
-
+	
 		bool blockHasPlayer(int Index) const
 		{
 			if (m_StorageArray[Index] & PLAYER)
@@ -355,7 +308,9 @@ class Game
 			{
 				if (  blockHasPlayer(SrcIndex) && blockHasBox(DestIndex) )
 				{
-					processMoveUp(DestIndex, DestIndex - m_Height);
+					int srcIdx = DestIndex;
+					int destIdx = DestIndex+(DestIndex - SrcIndex);
+					processMoveUp(srcIdx, destIdx);
 				}
 
 //				else
@@ -381,10 +336,36 @@ class Game
 			}
 		}
 
+		void PlayerMoveLeft()
+		{
+			// 1. 플레이어가 왼쪽으로 이동가능한가?
+			//		왼쪽에 박스가 있나?
+			//			박스가 왼쪽으로 이동가능한가?
+			//				가능하다면 박스를 이동
+			//				플레이어도 이동
+			//				불가능하다면 박스이동불가
+			//				플레이어도 이동불가.
+			int playerLeftIndex = m_Player.GetPos() - 1;
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerLeftIndex;
+
+			processMoveUp(srcIndex, destIndex);
+		}
+
+		void PlayerMoveRight()
+		{
+			int playerRightIndex = m_Player.GetPos() + 1;
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerRightIndex;
+
+			processMoveUp(srcIndex, destIndex);
+		}
+
 		void PlayerMoveUp()
 		{
 			int playerUpIndex = m_Player.GetPos() - m_Height;
-	//		processPlayerMove(playerUpIndex);
 
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerUpIndex;
@@ -394,7 +375,11 @@ class Game
 		void PlayerMoveDown()
 		{
 			int playerDownIndex = m_Player.GetPos() + m_Height;
-			processPlayerMove(playerDownIndex);
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerDownIndex;
+
+			processMoveUp(srcIndex, destIndex);
 		}
 
 		void swapIndex(int PlayerIndex, int MovetoIndex) const
@@ -459,6 +444,8 @@ private:
 
 	void initialize(int Width, int Height)
 	{
+		srand(static_cast<unsigned int>(time(NULL)));
+
 		m_Storage.Init(Width, Height);
 		m_Storage.InitPlayerIndex();
 	}
@@ -472,8 +459,8 @@ private:
 			if (input == L'q')
 				break;
 			update(input);
-			wcin.get();
-			wcin.get();
+//			wcin.get();
+//			wcin.get();
 		}
 	}
 	wchar_t getInput()
@@ -543,11 +530,18 @@ private:
 		m_Storage.Draw();
 	}
 
-	void drawDebugInfo() const
+	void drawDebugInfo()
 	{
 		drawPlayerIndex();
 		drawStorageInfo();
 		wcout << endl;
+		drawPrevFrameLog();
+	}
+
+	void drawPrevFrameLog()
+	{
+		wcout << L"PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
+		m_Storage.ClearLog();
 	}
 
 	void drawStorageInfo() const
