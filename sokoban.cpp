@@ -122,6 +122,10 @@ using namespace std;
 #include<locale>
 #include <assert.h>
 
+#include<sstream>
+
+
+
 class Game
 {
 	enum MoveAction
@@ -164,7 +168,7 @@ class Game
 
 		Player m_Player;
 
-		wstring m_PrevFrameLog;
+		wostringstream	m_PrevFrameLog;
 
 		void createWall()
 		{
@@ -223,8 +227,8 @@ class Game
 		int GetWidth() const { return m_Width; }
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
-		wstring GetPrevFrameLog() const { return m_PrevFrameLog;  }
-		void ClearLog() { m_PrevFrameLog.clear();  }
+		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str();  }
+		void ClearLog() { m_PrevFrameLog.str(L"");  }
 
 		void Init(int Width, int Height)
 		{
@@ -252,26 +256,26 @@ class Game
 			}
 		}
 
-		bool IsMovableBlock(BlockType Block) const
+		bool IsMovableBlock(BlockType Block)
 		{
 			if (Block == EMPTY_SLOT)
 			{
-				wcout << L"EMPTY_SLOT" << endl;
+				m_PrevFrameLog << L"EMPTY_SLOT" << endl;;
 				return true;
 			}
 			if( Block == GOAL )
 			{
-				wcout << L"GOAL" << endl;
+				m_PrevFrameLog << L"GOAL" << endl;;
 				return true;
 			}
 			if (Block == BOX)
 			{
-				wcout << L"BOX" << endl;
+				m_PrevFrameLog << L"BOX" << endl;;
 				return true;
 			}
 			else
 			{
-				wcout << L"이동불가블록" << endl;
+				m_PrevFrameLog << L"이동불가블록" << endl;
 				return false;
 			}
 
@@ -332,7 +336,7 @@ class Game
 			}
 			else
 			{
-				wcout << L"processMoveUp() 실패" << endl;
+				m_PrevFrameLog << L"processMoveUp() 실패" << endl;
 			}
 		}
 
@@ -380,13 +384,6 @@ class Game
 			int destIndex = playerDownIndex;
 
 			processMoveUp(srcIndex, destIndex);
-		}
-
-		void swapIndex(int PlayerIndex, int MovetoIndex) const
-		{
-			BlockType temp = m_StorageArray[MovetoIndex];
-			m_StorageArray[MovetoIndex] = m_StorageArray[PlayerIndex];
-			m_StorageArray[PlayerIndex] = temp;
 		}
 
 		void Draw() const
@@ -459,8 +456,6 @@ private:
 			if (input == L'q')
 				break;
 			update(input);
-//			wcin.get();
-//			wcin.get();
 		}
 	}
 	wchar_t getInput()
@@ -489,7 +484,6 @@ private:
 			break;
 		default:
 			wcout << L"정해지지않은입력:" << input << endl;
-			wcin.get();
 		}
 
 		return result;
@@ -526,8 +520,9 @@ private:
 	void draw()
 	{
 		clear();
-		drawDebugInfo();
 		m_Storage.Draw();
+		wcout << endl;
+		drawDebugInfo();
 	}
 
 	void drawDebugInfo()
