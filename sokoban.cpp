@@ -228,7 +228,7 @@ class Game
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
 		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str();  }
-		void ClearLog() { m_PrevFrameLog.str(L"");  }
+		void ClearLog() { m_PrevFrameLog.str(L""); m_PrevFrameLog<< endl;; }
 
 		void Init(int Width, int Height)
 		{
@@ -256,37 +256,39 @@ class Game
 			}
 		}
 
-		bool IsMovableBlock(BlockType Block)
+		bool IsMovableBlock(int DestIndex)
 		{
-			if (Block == EMPTY_SLOT)
+			bool ret = false;
+
+			m_PrevFrameLog << L"IsMovableBlock(" << DestIndex << L")";
+			m_PrevFrameLog.setf(ios_base::hex, ios_base::basefield);
+			m_PrevFrameLog.setf(ios_base::showbase);
+			m_PrevFrameLog<< L", Block:" << m_StorageArray[DestIndex] << endl;;
+			m_PrevFrameLog.unsetf(ios_base::hex);
+
+			if (m_StorageArray[DestIndex] & WALL)
 			{
-				m_PrevFrameLog << L"EMPTY_SLOT" << endl;;
-				return true;
-			}
-			if( Block == GOAL )
-			{
-				m_PrevFrameLog << L"GOAL" << endl;;
-				return true;
-			}
-			if (Block == BOX)
-			{
-				m_PrevFrameLog << L"BOX" << endl;;
-				return true;
+				m_PrevFrameLog << L"WALL에 막힘" << endl;
+				ret=false;
 			}
 			else
 			{
-				m_PrevFrameLog << L"이동불가블록" << endl;
-				return false;
+				ret=true;
 			}
-
+			return ret;
 		}
 
 		bool IsValidIndex(int PlayerDestIndex)
 		{
 			if (PlayerDestIndex > 0 && PlayerDestIndex < m_Size)
+			{
 				return true;
+			}
 			else
+			{
+				m_PrevFrameLog << L"InvalidIndex:" << PlayerDestIndex << endl;
 				return false;
+			}
 		}
 	
 		bool blockHasPlayer(int Index) const
@@ -306,38 +308,55 @@ class Game
 
 		}
 
-		void processMoveUp(int SrcIndex, int DestIndex)
+		bool processMove(int SrcIndex, int DestIndex)
 		{
-			if (IsValidIndex(SrcIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
+			m_PrevFrameLog << L"processMove(" << SrcIndex << L", " << DestIndex << L")"<<endl;
+
+			if (!IsValidIndex(SrcIndex))
+				return false;
+
+			bool ret = false;
+
+			if (IsMovableBlock(DestIndex))
 			{
-				if (  blockHasPlayer(SrcIndex) && blockHasBox(DestIndex) )
+				if (blockHasPlayer(SrcIndex) && blockHasBox(DestIndex))
 				{
 					int srcIdx = DestIndex;
-					int destIdx = DestIndex+(DestIndex - SrcIndex);
-					processMoveUp(srcIdx, destIdx);
-				}
+					int destIdx = DestIndex + (DestIndex - SrcIndex);
+					bool result = processMove(srcIdx, destIdx);
 
-//				else
-				{
-					if (blockHasPlayer(SrcIndex) )
+					if (result)
 					{
-						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex]^PLAYER);
-						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+						if (blockHasPlayer(SrcIndex))
+						{
+							m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
+							m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+
+							if (blockHasPlayer(DestIndex))
+								m_Player.SetPos(DestIndex);
+						}
 					}
-					else if (blockHasBox(SrcIndex) )
+				}
+				else
+				{
+					if (blockHasPlayer(SrcIndex))
+					{
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+
+						if (blockHasPlayer(DestIndex))
+							m_Player.SetPos(DestIndex);
+					}
+					else if (blockHasBox(SrcIndex) && !blockHasBox(DestIndex) )
 					{
 						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ BOX);
 						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ BOX);
+						ret = true;
 					}
-					
-					if(blockHasPlayer(DestIndex) )
-						m_Player.SetPos(DestIndex);
 				}
 			}
-			else
-			{
-				m_PrevFrameLog << L"processMoveUp() 실패" << endl;
-			}
+
+			return ret;
 		}
 
 		void PlayerMoveLeft()
@@ -354,7 +373,7 @@ class Game
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerLeftIndex;
 
-			processMoveUp(srcIndex, destIndex);
+			processMove(srcIndex, destIndex);
 		}
 
 		void PlayerMoveRight()
@@ -364,7 +383,7 @@ class Game
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerRightIndex;
 
-			processMoveUp(srcIndex, destIndex);
+			processMove(srcIndex, destIndex);
 		}
 
 		void PlayerMoveUp()
@@ -374,7 +393,7 @@ class Game
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerUpIndex;
 
-			processMoveUp(srcIndex, destIndex);
+			processMove(srcIndex, destIndex);
 		}
 		void PlayerMoveDown()
 		{
@@ -383,7 +402,7 @@ class Game
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerDownIndex;
 
-			processMoveUp(srcIndex, destIndex);
+			processMove(srcIndex, destIndex);
 		}
 
 		void Draw() const
