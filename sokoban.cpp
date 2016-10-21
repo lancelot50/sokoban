@@ -405,6 +405,21 @@ class Game
 			processMove(srcIndex, destIndex);
 		}
 
+		bool IsEnd() const
+		{
+			int matchCnt = 0;
+			for (int i = 0; i < m_Size; ++i)
+			{
+				if (m_StorageArray[i] == BOX_ON_THE_GOAL)
+					++matchCnt;
+			}
+
+			if (matchCnt == m_BoxCnt)
+				return true;
+			else
+				return false;
+		}
+
 		void Draw() const
 		{
 			for (int i = 0; i<m_Width; ++i)
@@ -471,6 +486,8 @@ private:
 		while (true)
 		{
 			draw();
+			if (m_Storage.IsEnd())
+				break;
 			wchar_t input = getInput();
 			if (input == L'q')
 				break;
@@ -538,7 +555,7 @@ private:
 
 	void draw()
 	{
-		clear();
+		clearScreen();
 		m_Storage.Draw();
 		wcout << endl;
 		drawDebugInfo();
@@ -548,13 +565,12 @@ private:
 	{
 		drawPlayerIndex();
 		drawStorageInfo();
-		wcout << endl;
 		drawPrevFrameLog();
 	}
 
 	void drawPrevFrameLog()
 	{
-		wcout << L"PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
+		wcout <<endl<< L"PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
 		m_Storage.ClearLog();
 	}
 
@@ -568,7 +584,7 @@ private:
 		wcout << L"플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
 	}
 
-	void clear()
+	void clearScreen()
 	{
 		system("cls");
 	}
