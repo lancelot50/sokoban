@@ -124,8 +124,6 @@ using namespace std;
 
 #include<sstream>
 
-
-
 class Game
 {
 	enum MoveAction
@@ -186,17 +184,25 @@ class Game
 			}
 		}
 
+		bool isEdge(int Idx) const
+		{
+			if (m_StorageArray[Idx - 1] != WALL && m_StorageArray[Idx + 1] != WALL && m_StorageArray[Idx - m_Width] != WALL && m_StorageArray[Idx + m_Width] != WALL)
+				return false;
+			else
+				return true;
+		}
+
 		void loadBox()
 		{
 			for (int i = 0; i < m_Width; ++i)
 			{
 				for (int j = 0; j < m_Height; ++j)
 				{
-					assert(i*m_Height + j < m_Size);		// code analysis 오류나서
-
-					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 10 == 0)
+					int curIndex = i*m_Height + j;
+					assert(curIndex < m_Size);		// code analysis 오류나서
+					if (m_StorageArray[curIndex] != WALL && rand() % 10 == 0 && !isEdge(curIndex))
 					{
-						m_StorageArray[i*m_Height + j] = BOX;
+						m_StorageArray[curIndex] = BOX;
 						++m_BoxCnt;
 					}
 				}
@@ -205,13 +211,14 @@ class Game
 
 		void loadGoal()
 		{
-			while (m_BoxCnt >= 0)
+			int boxCnt = m_BoxCnt;
+			while (boxCnt > 0)
 			{
 				int index = rand() % m_Size;
 				if (m_StorageArray[index] == EMPTY_SLOT)
 				{ 
 					m_StorageArray[index] = GOAL;
-					--m_BoxCnt;
+					--boxCnt;
 				}
 			}
 		}
@@ -487,7 +494,14 @@ private:
 		{
 			draw();
 			if (m_Storage.IsEnd())
+			{
+				wcout << L"******************" << endl;
+				wcout << L"     You Win!" << endl;
+				wcout << L"******************" << endl;
+				wcin.get();
+				wcin.get();
 				break;
+			}
 			wchar_t input = getInput();
 			if (input == L'q')
 				break;
@@ -595,6 +609,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(8,8);
+	game.Start(12,8);
 	return 0;
 }
