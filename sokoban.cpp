@@ -547,8 +547,6 @@ private:
 
 	void movePlayerPosition(MoveAction move)
 	{
-		MoveAction move=LEFT;
-
 		switch (move)
 		{
 		case LEFT:
@@ -567,10 +565,6 @@ private:
 			wcout << L"정해지지않은움직임:" << move << endl;
 			wcin.get();
 		}
-	}
-	
-	void drawPlayer()
-	{
 	}
 
 	void draw()
@@ -607,25 +601,6 @@ private:
 	void clearScreen()
 	{
 		system("cls");
-	}
-	void drawStorage()
-	{
-		for(int i=0; i<m_StorageWidth; ++i)
-		{
-			for(int j=0; j<m_StorageHeight; ++j)
-			{
-				switch(m_Storage[i*m_StorageHeight+j])
-				{
-				case WALL :
-					wcout<<L'|';
-					break;
-				case EMPTY_SLOT :
-					wcout<<L'.';
-					break;
-				}
-			}
-			wcout<<endl;
-		}
 	}
 };
 
