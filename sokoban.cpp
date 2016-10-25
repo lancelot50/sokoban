@@ -122,6 +122,8 @@ using namespace std;
 #include<locale>
 #include <assert.h>
 
+#include<sstream>
+
 class Game
 {
 	enum MoveAction
@@ -144,7 +146,6 @@ class Game
 			PLAYER				= 0x00000008,
 			BOX_ON_THE_GOAL		= BOX | GOAL,
 			PLAYER_ON_THE_GOAL	= PLAYER | GOAL,
-
 		};
 
 		class Player
@@ -165,6 +166,8 @@ class Game
 
 		Player m_Player;
 
+		wostringstream	m_PrevFrameLog;
+
 		void createWall()
 		{
 			for (int i = 0; i < m_Width; ++i)
@@ -181,17 +184,25 @@ class Game
 			}
 		}
 
+		bool isEdge(int Idx) const
+		{
+			if (m_StorageArray[Idx - 1] != WALL && m_StorageArray[Idx + 1] != WALL && m_StorageArray[Idx - m_Width] != WALL && m_StorageArray[Idx + m_Width] != WALL)
+				return false;
+			else
+				return true;
+		}
+
 		void loadBox()
 		{
 			for (int i = 0; i < m_Width; ++i)
 			{
 				for (int j = 0; j < m_Height; ++j)
 				{
-					assert(i*m_Height + j < m_Size);		// code analysis 오류나서
-
-					if (m_StorageArray[i*m_Height + j] != WALL && rand() % 20 == 0)
+					int curIndex = i*m_Height + j;
+					assert(curIndex < m_Size);		// code analysis 오류나서
+					if (m_StorageArray[curIndex] != WALL && rand() % 10 == 0 && !isEdge(curIndex))
 					{
-						m_StorageArray[i*m_Height + j] = BOX;
+						m_StorageArray[curIndex] = BOX;
 						++m_BoxCnt;
 					}
 				}
@@ -200,14 +211,14 @@ class Game
 
 		void loadGoal()
 		{
-			int createBox = m_BoxCnt;
-			while (createBox > 0)
+			int boxCnt = m_BoxCnt;
+			while (boxCnt > 0)
 			{
 				int index = rand() % m_Size;
 				if (m_StorageArray[index] == EMPTY_SLOT)
 				{ 
 					m_StorageArray[index] = GOAL;
-					--createBox;
+					--boxCnt;
 				}
 			}
 		}
@@ -224,6 +235,8 @@ class Game
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
 		int GetBoxCnt() const { return m_BoxCnt;  }
+		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str();  }
+		void ClearLog() { m_PrevFrameLog.str(L""); m_PrevFrameLog<< endl;; }
 
 		void Init(int Width, int Height)
 		{
@@ -251,78 +264,41 @@ class Game
 			}
 		}
 
-		bool IsMovableBlock(BlockType Block) const
+		bool IsMovableBlock(int DestIndex)
 		{
-			if (Block == EMPTY_SLOT || Block == GOAL || Block == BOX || Block== BOX_ON_THE_GOAL )
-				return true;
+			bool ret = false;
+
+			m_PrevFrameLog << L"IsMovableBlock(" << DestIndex << L")";
+			m_PrevFrameLog.setf(ios_base::hex, ios_base::basefield);
+			m_PrevFrameLog.setf(ios_base::showbase);
+			m_PrevFrameLog<< L", Block:" << m_StorageArray[DestIndex] << endl;;
+			m_PrevFrameLog.unsetf(ios_base::hex);
+
+			if (m_StorageArray[DestIndex] & WALL)
+			{
+				m_PrevFrameLog << L"WALL에 막힘" << endl;
+				ret=false;
+			}
 			else
-				return false;
+			{
+				ret=true;
+			}
+			return ret;
 		}
 
 		bool IsValidIndex(int PlayerDestIndex)
 		{
 			if (PlayerDestIndex > 0 && PlayerDestIndex < m_Size)
-				return true;
-			else
-				return false;
-		}
-
-		void processPlayerMove(int PlayerDestIndex)
-		{
-			if ( IsValidIndex(PlayerDestIndex) && IsMovableBlock(m_StorageArray[PlayerDestIndex]))
 			{
-				switch (m_StorageArray[m_Player.GetPos()])
-				{
-				case PLAYER:
-					m_StorageArray[m_Player.GetPos()] = EMPTY_SLOT;
-					break;
-				case PLAYER_ON_THE_GOAL:
-					m_StorageArray[m_Player.GetPos()] = GOAL;
-					break;
-				}
-
-				switch (m_StorageArray[PlayerDestIndex])
-				{
-				case EMPTY_SLOT:
-					//swapIndex(m_Player.GetPos(), playerDestIndex);
-					m_StorageArray[PlayerDestIndex] = PLAYER;
-					break;
-				case GOAL:
-					m_StorageArray[PlayerDestIndex] = PLAYER_ON_THE_GOAL;
-					break;
-				default:
-					break;
-				}
-				m_Player.SetPos(PlayerDestIndex);
-
-				wcout << L"이동" << endl;
+				return true;
 			}
 			else
-				wcout << L"이동불가" << endl;
+			{
+				m_PrevFrameLog << L"InvalidIndex:" << PlayerDestIndex << endl;
+				return false;
+			}
 		}
-
-		void PlayerMoveLeft()
-		{
-			// 1. 플레이어가 왼쪽으로 이동가능한가?
-			//		왼쪽에 박스가 있나?
-			//			박스가 왼쪽으로 이동가능한가?
-			//				가능하다면 박스를 이동
-			//				플레이어도 이동
-			//				불가능하다면 박스이동불가
-			//				플레이어도 이동불가.
-
-			int playerLeftIndex = m_Player.GetPos() - 1;
-			processPlayerMove(playerLeftIndex);
-
-			//test merge
-		}
-
-		void PlayerMoveRight()
-		{
-			int playerRightIndex = m_Player.GetPos() + 1;
-			processPlayerMove(playerRightIndex);
-		}
-
+	
 		bool blockHasPlayer(int Index) const
 		{
 			if (m_StorageArray[Index] & PLAYER)
@@ -340,59 +316,116 @@ class Game
 
 		}
 
-		void processMoveUp(int SrcIndex, int DestIndex)
+		bool processMove(int SrcIndex, int DestIndex)
 		{
-			if (IsValidIndex(DestIndex) && IsMovableBlock(m_StorageArray[DestIndex]))
+			m_PrevFrameLog << L"processMove(" << SrcIndex << L", " << DestIndex << L")"<<endl;
+
+			if (!IsValidIndex(SrcIndex))
+				return false;
+
+			bool ret = false;
+
+			if (IsMovableBlock(DestIndex))
 			{
-				if (  blockHasPlayer(SrcIndex) && blockHasBox(DestIndex) )
+				if (blockHasPlayer(SrcIndex) && blockHasBox(DestIndex))
 				{
-					processMoveUp(DestIndex, DestIndex + (DestIndex-SrcIndex) );
-				}
-//				else
-				{
-					if (blockHasPlayer(SrcIndex) )
+					int srcIdx = DestIndex;
+					int destIdx = DestIndex + (DestIndex - SrcIndex);
+					bool result = processMove(srcIdx, destIdx);
+
+					if (result)
 					{
-						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex]^PLAYER);
-						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+						if (blockHasPlayer(SrcIndex))
+						{
+							m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
+							m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+
+							if (blockHasPlayer(DestIndex))
+								m_Player.SetPos(DestIndex);
+						}
 					}
-					else if (blockHasBox(SrcIndex) )
+				}
+				else
+				{
+					if (blockHasPlayer(SrcIndex))
+					{
+						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
+						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
+
+						if (blockHasPlayer(DestIndex))
+							m_Player.SetPos(DestIndex);
+					}
+					else if (blockHasBox(SrcIndex) && !blockHasBox(DestIndex) )
 					{
 						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ BOX);
 						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ BOX);
+						ret = true;
 					}
-					
-					if(blockHasPlayer(DestIndex) )
-						m_Player.SetPos(DestIndex);
 				}
 			}
-			else
-			{
-				wcout << L"processMoveUp() 실패" << endl;
-			}
 
+			return ret;
+		}
+
+		void PlayerMoveLeft()
+		{
+			// 1. 플레이어가 왼쪽으로 이동가능한가?
+			//		왼쪽에 박스가 있나?
+			//			박스가 왼쪽으로 이동가능한가?
+			//				가능하다면 박스를 이동
+			//				플레이어도 이동
+			//				불가능하다면 박스이동불가
+			//				플레이어도 이동불가.
+			int playerLeftIndex = m_Player.GetPos() - 1;
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerLeftIndex;
+
+			processMove(srcIndex, destIndex);
+		}
+
+		void PlayerMoveRight()
+		{
+			int playerRightIndex = m_Player.GetPos() + 1;
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerRightIndex;
+
+			processMove(srcIndex, destIndex);
 		}
 
 		void PlayerMoveUp()
 		{
 			int playerUpIndex = m_Player.GetPos() - m_Height;
-	//		processPlayerMove(playerUpIndex);
 
 			int srcIndex = m_Player.GetPos();
 			int destIndex = playerUpIndex;
 
-			processMoveUp(srcIndex, destIndex);
+			processMove(srcIndex, destIndex);
 		}
 		void PlayerMoveDown()
 		{
 			int playerDownIndex = m_Player.GetPos() + m_Height;
-			processPlayerMove(playerDownIndex);
+
+			int srcIndex = m_Player.GetPos();
+			int destIndex = playerDownIndex;
+
+			processMove(srcIndex, destIndex);
 		}
 
-		void swapIndex(int PlayerIndex, int MovetoIndex) const
+		bool IsEnd() const
 		{
-			BlockType temp = m_StorageArray[MovetoIndex];
-			m_StorageArray[MovetoIndex] = m_StorageArray[PlayerIndex];
-			m_StorageArray[PlayerIndex] = temp;
+			int matchCnt = 0;
+			for (int i = 0; i < m_Size; ++i)
+			{
+				if (m_StorageArray[i] == BOX_ON_THE_GOAL)
+					++matchCnt;
+			}
+
+			if (matchCnt == m_BoxCnt)
+				return true;
+			else
+				return false;
 		}
 
 		void Draw() const
@@ -451,6 +484,7 @@ private:
 	void initialize(int Width, int Height)
 	{
 		srand(static_cast<unsigned int>(time(NULL)));
+
 		m_Storage.Init(Width, Height);
 		m_Storage.InitPlayerIndex();
 	}
@@ -460,6 +494,15 @@ private:
 		while (true)
 		{
 			draw();
+			if (m_Storage.IsEnd())
+			{
+				wcout << L"******************" << endl;
+				wcout << L"     You Win!" << endl;
+				wcout << L"******************" << endl;
+				wcin.get();
+				wcin.get();
+				break;
+			}
 			wchar_t input = getInput();
 			if (input == L'q')
 				break;
@@ -492,7 +535,6 @@ private:
 			break;
 		default:
 			wcout << L"정해지지않은입력:" << input << endl;
-			wcin.get();
 		}
 
 		return result;
@@ -529,15 +571,22 @@ private:
 	void draw()
 	{
 		clearScreen();
-		drawDebugInfo();
 		m_Storage.Draw();
+		wcout << endl;
+		drawDebugInfo();
 	}
 
-	void drawDebugInfo() const
+	void drawDebugInfo()
 	{
 		drawPlayerIndex();
 		drawStorageInfo();
-		wcout << endl;
+		drawPrevFrameLog();
+	}
+
+	void drawPrevFrameLog()
+	{
+		wcout <<endl<< L"PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
+		m_Storage.ClearLog();
 	}
 
 	void drawStorageInfo() const
@@ -561,6 +610,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(8,8);
+	game.Start(12,8);
 	return 0;
 }
