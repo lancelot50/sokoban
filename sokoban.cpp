@@ -194,16 +194,19 @@ class Game
 
 		void loadBox()
 		{
-			for (int i = 0; i < m_Width; ++i)
+			while (m_BoxCnt <= 0)
 			{
-				for (int j = 0; j < m_Height; ++j)
+				for (int i = 0; i < m_Width; ++i)
 				{
-					int curIndex = i*m_Height + j;
-					assert(curIndex < m_Size);		// code analysis 오류나서
-					if (m_StorageArray[curIndex] != WALL && rand() % 10 == 0 && !isEdge(curIndex))
+					for (int j = 0; j < m_Height; ++j)
 					{
-						m_StorageArray[curIndex] = BOX;
-						++m_BoxCnt;
+						int curIndex = i*m_Height + j;
+						assert(curIndex < m_Size);		// code analysis 오류나서
+						if (m_StorageArray[curIndex] != WALL && rand() % 10 == 0 && !isEdge(curIndex))
+						{
+							m_StorageArray[curIndex] = BOX;
+							++m_BoxCnt;
+						}
 					}
 				}
 			}
@@ -234,6 +237,7 @@ class Game
 		int GetWidth() const { return m_Width; }
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
+		int GetBoxCnt() const { return m_BoxCnt;  }
 		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str();  }
 		void ClearLog() { m_PrevFrameLog.str(L""); m_PrevFrameLog<< endl;; }
 
@@ -590,7 +594,7 @@ private:
 
 	void drawStorageInfo() const
 	{
-		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << endl;
+		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << ",  BoxCnt:"<<m_Storage.GetBoxCnt() << endl;
 	}
 
 	void drawPlayerIndex() const
