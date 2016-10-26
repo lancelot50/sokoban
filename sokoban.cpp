@@ -1,119 +1,3 @@
-//#include<iostream>
-//#include<cstdlib>
-//
-//using namespace std;
-//
-//wchar_t* StorageArray[]=
-//{
-//	L"########",
-//	L"#......#",
-//	L"#......#",
-//	L"#......#",
-//	L"#......#",
-//	L"#......#",
-//	L"#......#",
-//	L"########"
-//};
-//
-//class Sokoban
-//{
-//	static const int STORAGE_WIDTH=8;
-//	static const int STORAGE_HEIGHT=8;
-//	int m_Storage[STORAGE_WIDTH][STORAGE_HEIGHT];
-//
-//	bool IsExitCondition(wchar_t input)
-//	{
-//		if(input==L'q')
-//			return true;
-//		else
-//			return false;
-//	}
-//	
-//	wchar_t GetInput()
-//	{
-//		wchar_t input;
-//		wcin>>input;
-//		wcout<<L"input num : "<<input<<endl;
-//		return input;
-//	}
-//
-//	void Update()
-//	{
-//	}
-//	void ClearScreen()
-//	{
-//		system("cls");
-//	}
-//	void DrawStorage()
-//	{
-//		//int arrLen=sizeof(StorageArray)/sizeof(StorageArray[0]);
-//		//for(int i=0; i<arrLen; ++i)
-//		//{
-//		//	wcout<< StorageArray[i]<<endl;
-//		//}
-//		for(int i=0; i<STORAGE_WIDTH; ++i)
-//		{
-//			for(int j=0; j<STORAGE_HEIGHT; ++j)
-//			{
-//				wcout<<m_Storage[i][j];
-//			}
-//			cout<<endl;
-//		}
-//	}
-//	void DrawMan()
-//	{
-//
-//	}
-//	void Draw()
-//	{
-//		ClearScreen();
-//		DrawStorage();
-////		DrawMan();
-//	}
-//
-//	void LoadStorage()
-//	{
-//	}
-//
-//public :
-//	Sokoban()
-//	{
-//		for(int i=0; i<STORAGE_WIDTH; ++i)
-//		{
-//			for(int j=0; j<STORAGE_HEIGHT; ++j)
-//			{
-//				m_Storage[i][j]=0;
-//			}
-//		}
-//
-//	}
-//	void Start()
-//	{
-//		wchar_t input=0;
-////		wcout<<L"size:"<<sizeof(StorageArray);
-////		wcout<<L"size:"<<sizeof(StorageArray[0]);
-//		LoadStorage();
-//		while(true)
-//		{
-//			input=GetInput();
-//
-//			if( IsExitCondition(input) )
-//				break;
-//			Update();
-//			ClearScreen();
-//			Draw();
-//		}
-//
-//	}
-//};
-//
-//int main()
-//{
-//	Sokoban game;
-//	game.Start();
-//
-//	return 0;
-//}
 #include<iostream>
 #include<string>
 using namespace std;
@@ -316,7 +200,6 @@ class Game
 				return true;
 			else
 				return false;
-
 		}
 
 		bool processMove(int SrcIndex, int DestIndex)
@@ -515,6 +398,8 @@ private:
 	wchar_t getInput()
 	{
 		wchar_t inputChar = 0;
+		wcout << L"*************************************" << endl;
+		wcout << L"LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
 		wcin >> inputChar;
 		return inputChar;
 	}
@@ -602,7 +487,7 @@ private:
 		wcout << L"플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
 	}
 
-	void clearScreen()
+	void clearScreen() const
 	{
 		system("cls");
 	}
@@ -613,6 +498,6 @@ int main()
 	wcout.imbue(locale("kor"));
 
 	Game game;
-	game.Start(12,8);
+	game.Start(8,8);
 	return 0;
 }
