@@ -35,10 +35,16 @@ class Game
 		class Player
 		{
 			int m_PosIdx;
+			int m_MoveCnt;
 		public:
 			Player() :m_PosIdx(0) {}
-			void SetPos(int PosIdx) { m_PosIdx = PosIdx; }
+			void SetPos(int PosIdx) 
+			{ 
+				m_PosIdx = PosIdx;
+				++m_MoveCnt;
+			}
 			int GetPos() const { return m_PosIdx; }
+			int GetMoveCnt() const { return m_MoveCnt;  }
 		};
 
 		BlockType* m_StorageArray;
@@ -122,6 +128,7 @@ class Game
 		int GetHeight() const { return m_Height; }
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
 		int GetBoxCnt() const { return m_BoxCnt;  }
+		int GetPlayerMoveCnt() const { return m_Player.GetMoveCnt();  }
 		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str();  }
 		void ClearLog() { m_PrevFrameLog.str(L""); m_PrevFrameLog<< endl;; }
 
@@ -455,10 +462,16 @@ private:
 			wcin.get();
 		}
 	}
+	
+	void drawGameInfo()
+	{
+		wcout << "Player Move Count : "<<m_Storage.GetPlayerMoveCnt()<<endl;
+	}
 
 	void draw()
 	{
 		clearScreen();
+		drawGameInfo();
 		m_Storage.Draw();
 		wcout << endl;
 		drawDebugInfo();
