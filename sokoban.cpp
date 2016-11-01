@@ -37,7 +37,7 @@ class Game
 			int m_PosIdx;
 			int m_MoveCnt;
 		public:
-			Player() :m_PosIdx(0) {}
+			Player() :m_PosIdx(0), m_MoveCnt(0) {}
 			void SetPos(int PosIdx) 
 			{ 
 				m_PosIdx = PosIdx;
