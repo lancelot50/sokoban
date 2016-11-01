@@ -361,19 +361,7 @@ class Game
 
 	Storage m_Storage;
 
-public:
-	Game() { }
-	void Start(int width, int height)
-	{
-		initialize(width, height);
-		gameLoop();
-		terminate();
-	}
-
-private:
-
 	void terminate() {	}
-
 	void initialize(int Width, int Height)
 	{
 		srand(static_cast<unsigned int>(time(NULL)));
@@ -504,6 +492,16 @@ private:
 	{
 		system("cls");
 	}
+
+public:
+	Game() { }
+	void Start(int width, int height)
+	{
+		initialize(width, height);
+		gameLoop();
+		terminate();
+	}
+
 };
 
 int main()
