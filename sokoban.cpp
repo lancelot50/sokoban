@@ -377,12 +377,19 @@ class Game
 			draw();
 			if (m_Storage.IsEnd())
 			{
+				int cont = 0;
 				wcout << L"******************" << endl;
 				wcout << L"     You Win!" << endl;
 				wcout << L"******************" << endl;
-				wcin.get();
-				wcin.get();
-				break;
+				wcout << L"**** continue(y/n)? ***" << endl;
+				wcin >> cont;
+
+				if (cont == L'y')
+				{
+					
+				}
+				else
+					break;
 			}
 			wchar_t input = getInput();
 			if (input == L'q')
