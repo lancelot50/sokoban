@@ -306,7 +306,7 @@ class Game
 			processMove(srcIndex, destIndex);
 		}
 
-		bool IsEnd() const
+		bool IsComplete() const
 		{
 			int matchCnt = 0;
 			for (int i = 0; i < m_Size; ++i)
@@ -375,7 +375,7 @@ class Game
 		while (true)
 		{
 			draw();
-			if (m_Storage.IsEnd())
+			if (m_Storage.IsComplete())
 			{
 				int cont = 0;
 				wcout << L"******************" << endl;
