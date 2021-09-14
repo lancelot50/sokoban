@@ -1,4 +1,10 @@
-#include<iostream>
+#include"GameLib\Framework.h"
+
+using namespace GameLib;
+//using namespace std;
+
+
+//#include<iostream>
 #include<string>
 using namespace std;
 #include<stdlib.h>
@@ -7,6 +13,57 @@ using namespace std;
 #include <assert.h>
 
 #include<sstream>
+
+template<class T>
+class Array2D
+{
+	T* m_Array=nullptr;
+	int m_Width = 0;
+	int m_Height = 0;
+
+	void destroy()
+	{
+		if (m_Array)
+		{
+			delete[] m_Array;
+			m_Array = nullptr;
+		}
+	}
+
+public :
+	Array2D(int Width, int Height)
+	{
+		SetSize(Width, Height);
+	}
+	void SetSize(int Width, int Height)
+	{
+		destroy();
+		m_Width = Width;
+		m_Height = Height;
+		m_Array = new T[m_Width * m_Height];
+	}
+	void Fill(T element)
+	{
+		for (int i = 0; i < m_Width * m_Height; ++i)
+			m_Array[i] = element;
+	}
+	virtual ~Array2D()
+	{
+		destroy();
+	}
+
+	T& operator()(int X, int Y)
+	{
+		return m_Array[Y * m_Width + X];
+	}
+	const T& operator()(int X, int Y) const
+	{
+		return m_Array[Y * m_Width + X];
+	}
+};
+
+
+
 
 class Game
 {
@@ -30,14 +87,18 @@ class Game
 			PLAYER = 0x00000008,
 			BOX_ON_THE_GOAL = BOX | GOAL,
 			PLAYER_ON_THE_GOAL = PLAYER | GOAL,
+			MAX_BLOCK_TYPE = PLAYER_ON_THE_GOAL + 1,
 		};
 
-		wchar_t m_BlockRenderArray[PLAYER_ON_THE_GOAL] = { EMPTY_SLOT, };
+		char m_StorageTextRenderer[MAX_BLOCK_TYPE] = { EMPTY_SLOT, };
+		unsigned int m_StorageColorFiller[MAX_BLOCK_TYPE] = { EMPTY_SLOT, };
 
 		class Player
 		{
 			int m_PosIdx;
 			int m_MoveCnt;
+			int m_PosX=0;
+			int m_PosY=0;
 		public:
 			Player() :m_PosIdx(0), m_MoveCnt(0) {}
 			void SetPos(int PosIdx)
@@ -45,12 +106,28 @@ class Game
 				m_PosIdx = PosIdx;
 				++m_MoveCnt;
 			}
+			void SetPos(int PosX, int PosY)
+			{
+				m_PosX = PosX;
+				m_PosY = PosY;
+				++m_MoveCnt;
+			}
+			void SetPosX(int PosX)
+			{
+				m_PosX = PosX;
+			}
+			void SetPosY(int PosY)
+			{
+				m_PosY = PosY;
+			}
+			int GetPosX() const { return m_PosX; }
+			int GetPosY() const { return m_PosY; }
 			int GetPos() const { return m_PosIdx; }
 			int GetMoveCnt() const { return m_MoveCnt; }
 			void ResetMoveCnt() { m_MoveCnt = 0; }
 		};
 
-		BlockType* m_StorageArray;
+		Array2D<BlockType> m_Storage2D{ 8,8 };
 
 		int m_Width;
 		int m_Height;
@@ -59,27 +136,31 @@ class Game
 
 		Player m_Player;
 
-		wostringstream	m_PrevFrameLog;
+		ostringstream	m_PrevFrameLog;
 
 		void createWall()
 		{
-			for (int i = 0; i < m_Width; ++i)
+			for (int j = 0; j < m_Height; ++j)
 			{
-				for (int j = 0; j < m_Height; ++j)
+				for (int i = 0; i < m_Width; ++i)
 				{
-					assert(i * m_Height + j < m_Size);		// code analysis 오류나서
+					assert(j * m_Width + i < m_Size);		// code analysis 오류나서
 
 					if (i == 0 || j == 0 || j == m_Height - 1 || i == m_Width - 1)
-						m_StorageArray[i * m_Height + j] = WALL;
+					{
+						m_Storage2D(i, j) = WALL;
+					}
 					else
-						m_StorageArray[i * m_Height + j] = EMPTY_SLOT;
+					{
+						m_Storage2D(i, j) = EMPTY_SLOT;
+					}
 				}
 			}
 		}
 
-		bool isEdge(int Idx) const
+		bool isEdge(int X, int Y) const
 		{
-			if (m_StorageArray[Idx - 1] != WALL && m_StorageArray[Idx + 1] != WALL && m_StorageArray[Idx - m_Width] != WALL && m_StorageArray[Idx + m_Width] != WALL)
+			if (m_Storage2D(X-1, Y)!=WALL && m_Storage2D(X+1, Y)!=WALL && m_Storage2D(X, Y-1)!=WALL && m_Storage2D(X, Y+1)!=WALL)
 				return false;
 			else
 				return true;
@@ -89,15 +170,17 @@ class Game
 		{
 			while (m_BoxCnt <= 0)
 			{
-				for (int i = 0; i < m_Width; ++i)
+				for (int j = 0; j < m_Height; ++j)
 				{
-					for (int j = 0; j < m_Height; ++j)
+					for (int i = 0; i < m_Width; ++i)
 					{
-						int curIndex = i * m_Height + j;
+						int curIndex = j * m_Width + i;
 						assert(curIndex < m_Size);		// code analysis 오류나서
-						if (m_StorageArray[curIndex] != WALL && rand() % 10 == 0 && !isEdge(curIndex))
+						bool bCreateBox = (rand() % 10 == 0);
+
+						if (m_Storage2D(i, j) != WALL && !isEdge(i, j) && bCreateBox)
 						{
-							m_StorageArray[curIndex] = BOX;
+							m_Storage2D(i, j) = BOX;
 							++m_BoxCnt;
 						}
 					}
@@ -110,20 +193,21 @@ class Game
 			int boxCnt = m_BoxCnt;
 			while (boxCnt > 0)
 			{
-				int index = rand() % m_Size;
-				if (m_StorageArray[index] == EMPTY_SLOT)
+				int x = (rand() % (m_Width - 2)) + 1;
+				int y = (rand() % (m_Height - 2)) + 1;
+
+				if (m_Storage2D(x, y) == EMPTY_SLOT)
 				{
-					m_StorageArray[index] = GOAL;
+					m_Storage2D(x, y) = GOAL;
 					--boxCnt;
 				}
 			}
 		}
 
 	public:
-		Storage() : m_Width(0), m_Height(0), m_Size(0), m_StorageArray(0), m_BoxCnt(0) {}
+		Storage() : m_Width(0), m_Height(0), m_Size(0), m_BoxCnt(0) {}
 		virtual ~Storage()
 		{
-			delete[] m_StorageArray;
 		}
 
 		int GetSize() const { return m_Size; }
@@ -132,18 +216,29 @@ class Game
 		int GetPlayerIndex() const { return m_Player.GetPos(); }
 		int GetBoxCnt() const { return m_BoxCnt; }
 		int GetPlayerMoveCnt() const { return m_Player.GetMoveCnt(); }
-		wstring GetPrevFrameLog() const { return m_PrevFrameLog.str(); }
-		void ClearLog() { m_PrevFrameLog.str(L""); m_PrevFrameLog << endl;; }
+		string GetPrevFrameLog() const { return m_PrevFrameLog.str(); }
+		void ClearLog() { m_PrevFrameLog.str(""); m_PrevFrameLog << endl;; }
 
 		void createBlockRenderArray()
 		{
-			m_BlockRenderArray[EMPTY_SLOT] = L' ';
-			m_BlockRenderArray[WALL] = L'|';
-			m_BlockRenderArray[GOAL] = L'.';
-			m_BlockRenderArray[BOX] = L'o';
-			m_BlockRenderArray[PLAYER] = L'p';
-			m_BlockRenderArray[BOX_ON_THE_GOAL] = L'O';
-			m_BlockRenderArray[PLAYER_ON_THE_GOAL] = L'P';
+			m_StorageTextRenderer[EMPTY_SLOT] = ' ';
+			m_StorageTextRenderer[WALL] = '#';
+			m_StorageTextRenderer[GOAL] = '.';
+			m_StorageTextRenderer[BOX] = 'o';
+			m_StorageTextRenderer[PLAYER] = 'p';
+			m_StorageTextRenderer[BOX_ON_THE_GOAL] = 'O';
+			m_StorageTextRenderer[PLAYER_ON_THE_GOAL] = 'P';
+		}
+
+		void createStorageColorFiller()
+		{
+			m_StorageColorFiller[EMPTY_SLOT] = 0x000000;
+			m_StorageColorFiller[WALL] = 0xffffff;
+			m_StorageColorFiller[GOAL] = 0x0000ff;
+			m_StorageColorFiller[BOX] = 0xff0000;
+			m_StorageColorFiller[PLAYER] = 0x00ff00;
+			m_StorageColorFiller[BOX_ON_THE_GOAL] = m_StorageColorFiller[GOAL] | m_StorageColorFiller[BOX];
+			m_StorageColorFiller[PLAYER_ON_THE_GOAL] = m_StorageColorFiller[GOAL] | m_StorageColorFiller[PLAYER];
 		}
 
 		void Create(int Width, int Height)
@@ -151,14 +246,14 @@ class Game
 			m_Width = Width;
 			m_Height = Height;
 			m_Size = Width * Height;
-			m_StorageArray = new BlockType[m_Size];
+			m_Storage2D.SetSize(Width, Height);
 			createBlockRenderArray();
+			createStorageColorFiller();
 		}
 
 		void Init()
 		{
-			for (int i = 0; i < m_Size; ++i)
-				m_StorageArray[i] = EMPTY_SLOT;
+			m_Storage2D.Fill(EMPTY_SLOT);
 			m_BoxCnt = 0;
 			createWall();
 			loadBox();
@@ -172,171 +267,112 @@ class Game
 		{
 			while (true)
 			{
-				int pos = rand() % m_Size;
-				if (m_StorageArray[pos] == EMPTY_SLOT)
+				int x = (rand() % (m_Width - 2)) + 1;
+				int y = (rand() % (m_Height - 2)) + 1;
+				if (m_Storage2D(x, y) == EMPTY_SLOT)
 				{
-					m_StorageArray[pos] = PLAYER;
-					m_Player.SetPos(pos);
+					m_Storage2D(x,y) = PLAYER;
+					m_Player.SetPos(x,y);
 					break;
 				}
 			}
 		}
 
-		bool IsMovableBlock(int DestIndex)
+		void printBlock(int DestX, int DestY)
 		{
-			bool ret = false;
-
-			m_PrevFrameLog << L"IsMovableBlock(" << DestIndex << L")";
 			m_PrevFrameLog.setf(ios_base::hex, ios_base::basefield);
 			m_PrevFrameLog.setf(ios_base::showbase);
-			m_PrevFrameLog << L", Block:" << m_StorageArray[DestIndex] << endl;;
+			m_PrevFrameLog << ", dest Block:" << m_Storage2D(DestX, DestY) << endl;;
 			m_PrevFrameLog.unsetf(ios_base::hex);
-
-			if (m_StorageArray[DestIndex] & WALL)
-			{
-				m_PrevFrameLog << L"WALL에 막힘" << endl;
-				ret = false;
-			}
-			else
-			{
-				ret = true;
-			}
-			return ret;
 		}
 
-		bool IsValidIndex(int PlayerDestIndex)
+		//bool blockHasPlayer(int Index) const
+		//{
+		//	if (m_StorageArray[Index] & PLAYER)
+		//		return true;
+		//	else
+		//		return false;
+		//}
+
+		//bool blockHasBox(int Index) const
+		//{
+		//	if (m_StorageArray[Index] & BOX)
+		//		return true;
+		//	else
+		//		return false;
+		//}
+
+
+		void PlayerMove(MoveAction Move)
 		{
-			if (PlayerDestIndex > 0 && PlayerDestIndex < m_Size)
+			int dx = 0;
+			int dy = 0;
+			switch (Move)
 			{
-				return true;
+			case LEFT :
+				dx = -1;
+				break;
+			case RIGHT :
+				dx = 1;
+				break;
+			case UP :
+				dy = -1;
+				break;
+			case DOWN :
+				dy = 1;
+				break;
 			}
-			else
+
+			int srcX = m_Player.GetPosX();
+			int srcY = m_Player.GetPosY();
+			int destX = srcX+dx;
+			int destY = srcY+dy;
+			
+			m_PrevFrameLog << "PlayerMove (" << srcX << ", " << srcY << ") -> (" << destX << ", " << destY << ")";
+			printBlock(destX, destY);
+			// 1. 목적지가 wall 이면 return false
+			// 2. 목적지에 box 가 있으면 box 진행 방향으로 1칸 더 앞을 확인해보고 가능하다면(wall 아님, box 아님) 박스를 옮기고 플레이어도 옮긴다.
+			// 3. 아니면 목적지로 플레이어를 이동시킨다.
+			if (m_Storage2D(destX, destY) & WALL)
 			{
-				m_PrevFrameLog << L"InvalidIndex:" << PlayerDestIndex << endl;
-				return false;
+				m_PrevFrameLog << "WALL에 막힘" << endl;
+				return;
 			}
-		}
-
-		bool blockHasPlayer(int Index) const
-		{
-			if (m_StorageArray[Index] & PLAYER)
-				return true;
-			else
-				return false;
-		}
-
-		bool blockHasBox(int Index) const
-		{
-			if (m_StorageArray[Index] & BOX)
-				return true;
-			else
-				return false;
-		}
-
-		bool processMove(int SrcIndex, int DestIndex)
-		{
-			m_PrevFrameLog << L"processMove(" << SrcIndex << L", " << DestIndex << L")" << endl;
-
-			if (!IsValidIndex(SrcIndex))
-				return false;
-
-			bool ret = false;
-
-			if (IsMovableBlock(DestIndex))
+			else if (m_Storage2D(destX, destY) & BOX)
 			{
-				if (blockHasPlayer(SrcIndex) && blockHasBox(DestIndex))
+				m_PrevFrameLog << "앞에 BOX" << endl;
+				int destDestX = destX + dx;
+				int destDestY = destY + dy;
+				bool isWall = m_Storage2D(destDestX, destDestY) & WALL;
+				bool isBox = m_Storage2D(destDestX, destDestY) & BOX;
+				if (!isWall && !isBox)
 				{
-					int srcIdx = DestIndex;
-					int destIdx = DestIndex + (DestIndex - SrcIndex);
-					bool result = processMove(srcIdx, destIdx);
-
-					if (result)
-					{
-						if (blockHasPlayer(SrcIndex))
-						{
-							m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
-							m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
-
-							if (blockHasPlayer(DestIndex))
-								m_Player.SetPos(DestIndex);
-						}
-					}
-				}
-				else
-				{
-					if (blockHasPlayer(SrcIndex))
-					{
-						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ PLAYER);
-						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ PLAYER);
-
-						if (blockHasPlayer(DestIndex))
-							m_Player.SetPos(DestIndex);
-					}
-					else if (blockHasBox(SrcIndex) && !blockHasBox(DestIndex))
-					{
-						m_StorageArray[SrcIndex] = static_cast<BlockType>(m_StorageArray[SrcIndex] ^ BOX);
-						m_StorageArray[DestIndex] = static_cast<BlockType>(m_StorageArray[DestIndex] ^ BOX);
-						ret = true;
-					}
+					m_Storage2D(destDestX, destDestY) = static_cast<BlockType>(m_Storage2D(destDestX, destDestY) ^ BOX);
+					m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY)^BOX);
+					m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY)^PLAYER);
+					m_Storage2D(srcX, srcY) = static_cast<BlockType>(m_Storage2D(srcX, srcY)^PLAYER);
+					m_Player.SetPos(destX, destY);
 				}
 			}
+			else
+			{
+				m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY) ^ PLAYER);
+				m_Storage2D(srcX, srcY) = static_cast<BlockType>(m_Storage2D(srcX, srcY) ^ PLAYER);
+				m_Player.SetPos(destX, destY);
+			}
 
-			return ret;
-		}
-
-		void PlayerMoveLeft()
-		{
-			// 1. 플레이어가 왼쪽으로 이동가능한가?
-			//		왼쪽에 박스가 있나?
-			//			박스가 왼쪽으로 이동가능한가?
-			//				가능하다면 박스를 이동
-			//				플레이어도 이동
-			//				불가능하다면 박스이동불가
-			//				플레이어도 이동불가.
-			int playerLeftIndex = m_Player.GetPos() - 1;
-
-			int srcIndex = m_Player.GetPos();
-			int destIndex = playerLeftIndex;
-
-			processMove(srcIndex, destIndex);
-		}
-
-		void PlayerMoveRight()
-		{
-			int playerRightIndex = m_Player.GetPos() + 1;
-
-			int srcIndex = m_Player.GetPos();
-			int destIndex = playerRightIndex;
-
-			processMove(srcIndex, destIndex);
-		}
-
-		void PlayerMoveUp()
-		{
-			int playerUpIndex = m_Player.GetPos() - m_Height;
-
-			int srcIndex = m_Player.GetPos();
-			int destIndex = playerUpIndex;
-
-			processMove(srcIndex, destIndex);
-		}
-		void PlayerMoveDown()
-		{
-			int playerDownIndex = m_Player.GetPos() + m_Height;
-
-			int srcIndex = m_Player.GetPos();
-			int destIndex = playerDownIndex;
-
-			processMove(srcIndex, destIndex);
 		}
 
 		bool IsComplete() const
 		{
 			int matchCnt = 0;
-			for (int i = 0; i < m_Size; ++i)
+			for (int j = 0; j < m_Height; ++j)
 			{
-				if (m_StorageArray[i] == BOX_ON_THE_GOAL)
+				for( int i = 0; i < m_Width; ++i)
+				{
+				if (m_Storage2D(i, j) == BOX_ON_THE_GOAL)
 					++matchCnt;
+				}
 			}
 
 			if (matchCnt == m_BoxCnt)
@@ -345,13 +381,28 @@ class Game
 				return false;
 		}
 
+		void drawCell(int X, int Y, unsigned int Color) const
+		{
+			unsigned* vram = Framework::instance().videoMemory();
+			unsigned windowWidth = Framework::instance().width();
+			static const int cellSize = 16;
+
+			for (int i = 0; i < cellSize; ++i)
+				for (int j = 0; j < cellSize; ++j)
+					vram[(Y * cellSize + i) * windowWidth + (X * cellSize + j)] = Color;
+		}
+
 		void Draw() const
 		{
-			for (int i = 0; i < m_Width; ++i)
+			for (int j = 0; j < m_Height; ++j)
 			{
-				for (int j = 0; j < m_Height; ++j)
-					wcout << m_BlockRenderArray[m_StorageArray[i * m_Height + j]];
-				wcout << endl;
+				for (int i = 0; i < m_Width; ++i)
+				{
+					BlockType type = m_Storage2D(i,j);
+					cout << m_StorageTextRenderer[type];
+					drawCell(i, j, m_StorageColorFiller[type]);
+				}
+				cout << endl;
 			}
 		}
 	};
@@ -359,6 +410,7 @@ class Game
 	Storage m_Storage;
 
 	void terminate() {	}
+public :
 	void initialize(int Width, int Height)
 	{
 		srand(static_cast<unsigned int>(time(NULL)));
@@ -366,7 +418,7 @@ class Game
 		m_Storage.Create(Width, Height);
 		m_Storage.Init();
 	}
-
+private:
 	void reset()
 	{
 		m_Storage.Init();
@@ -374,15 +426,15 @@ class Game
 
 	void drawWinMessage()
 	{
-		wcout << L"******************" << endl;
-		wcout << L"     You Win!" << endl;
-		wcout << L"******************" << endl;
-		wcout << L"**** continue(y/n)? ***" << endl;
+		cout << "******************" << endl;
+		cout << "     You Win!" << endl;
+		cout << "******************" << endl;
+		cout << "**** continue(y/n)? ***" << endl;
 	}
 	void drawInputMessage()
 	{
-		wcout << L"*************************************" << endl;
-		wcout << L"LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
+		cout << "*************************************" << endl;
+		cout << "LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
 	}
 
 	void gameLoop()
@@ -390,25 +442,21 @@ class Game
 		while (true)
 		{
 			draw();
-			if (m_Storage.IsComplete())
-				drawWinMessage();
-			else
-				drawInputMessage();
 
 			bool bQuit=update();
 			if (bQuit)
 				break;
 		}
 	}
-
+public :
 	bool update()
 	{
-		wchar_t input = getInput();
-		if (input == L'q')
+		char input = getInput();
+		if (input == 'q')
 			return true;
 		else if (m_Storage.IsComplete())
 		{
-			if (input == L'y')
+			if (input == 'y')
 			{
 				reset();
 				return false;
@@ -418,18 +466,18 @@ class Game
 		}
 
 		MoveAction move = GetMoveAction(input);
-		movePlayerPosition(move);
+		m_Storage.PlayerMove(move);
 		return false;
 	}
-
-	wchar_t getInput()
+private:
+	char getInput()
 	{
-		wchar_t inputChar = 0;
-		wcin >> inputChar;
+		char inputChar = 0;
+		cin >> inputChar;
 		return inputChar;
 	}
 
-	MoveAction GetMoveAction(wchar_t input)
+	MoveAction GetMoveAction(char input)
 	{
 		MoveAction result = HOLD;
 		switch (input)
@@ -447,48 +495,31 @@ class Game
 			result = DOWN;
 			break;
 		default:
-			wcout << L"정해지지않은입력:" << input << endl;
+			cout << "Undefined input:" << input << endl;
 		}
 
 		return result;
 	}
 
-	void movePlayerPosition(MoveAction move)
-	{
-		switch (move)
-		{
-		case LEFT:
-			m_Storage.PlayerMoveLeft();
-			break;
-		case RIGHT:
-			m_Storage.PlayerMoveRight();
-			break;
-		case UP:
-			m_Storage.PlayerMoveUp();
-			break;
-		case DOWN:
-			m_Storage.PlayerMoveDown();
-			break;
-		default:
-			wcout << L"정해지지않은움직임:" << move << endl;
-			wcin.get();
-		}
-	}
-	
 	void drawGameInfo()
 	{
-		wcout << "Player Move Count : "<<m_Storage.GetPlayerMoveCnt()<<endl;
+		cout << "Player Move Count : "<<m_Storage.GetPlayerMoveCnt()<<endl;
 	}
-
+public :
 	void draw()
 	{
 		clearScreen();
 		drawGameInfo();
 		m_Storage.Draw();
-		wcout << endl;
+		cout << endl;
 		drawDebugInfo();
-	}
 
+		if (m_Storage.IsComplete())
+			drawWinMessage();
+		else
+			drawInputMessage();
+	}
+private:
 	void drawDebugInfo()
 	{
 		drawPlayerIndex();
@@ -498,18 +529,18 @@ class Game
 
 	void drawPrevFrameLog()
 	{
-		wcout <<endl<< L"PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
+		cout <<endl<< "PrevFrameLog : " << m_Storage.GetPrevFrameLog()<< endl;
 		m_Storage.ClearLog();
 	}
 
 	void drawStorageInfo() const
 	{
-		wcout << L"StorageWidth : " << m_Storage.GetWidth() << L", StorageHeight:" << m_Storage.GetHeight() << ",  BoxCnt:"<<m_Storage.GetBoxCnt() << endl;
+		cout << "StorageWidth : " << m_Storage.GetWidth() << ", StorageHeight:" << m_Storage.GetHeight() << ",  BoxCnt:"<<m_Storage.GetBoxCnt() << endl;
 	}
 
 	void drawPlayerIndex() const
 	{
-		wcout << L"플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
+		cout << "플레이어Index:" << m_Storage.GetPlayerIndex() << endl;
 	}
 
 	void clearScreen() const
@@ -528,11 +559,40 @@ public:
 
 };
 
-int main()
-{
-	wcout.imbue(locale("kor"));
+//#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+//int main()
+//{
+////	cout.imbue(locale("kor"));
+//	Game game;
+//	game.Start(8,8);
+//	return 0;
+//}
 
-	Game game;
-	game.Start(8,8);
-	return 0;
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+namespace GameLib
+{
+	void Framework::update()
+	{
+		static Game game;
+		static bool bInit = false;
+		if (!bInit)
+		{
+			game.initialize(8, 10);
+			game.draw();
+			bInit = true;
+		}
+		else
+		{
+			bool bQuit=game.update();
+			game.draw();
+			if (bQuit)
+				Framework::instance().requestEnd();
+			if (Framework::instance().isEndRequested())
+			{
+				//종료처리가 필요하다면 여기다가 해도댐
+			}
+		}
+	}
 }
+
+
