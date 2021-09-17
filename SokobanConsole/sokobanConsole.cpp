@@ -1,31 +1,25 @@
-#include"GameLib\Framework.h"
-
-using namespace GameLib;
-//using namespace std;
-
-//#include<iostream>
+#include<iostream>
 #include<string>
 using namespace std;
+
 #include<sstream>
 
+#include "../array2dTemplate.h"
+#include "../player.h"
 
-#include "array2dTemplate.h"
-#include "player.h"
+#include "../GameConstant.h"
 
-#include "GameConstant.h"
+#include "../RenderInterface.h"
+#include "../ConsoleRenderInterface.h"
 
-#include "RenderInterface.h"
-#include "ConsoleRenderInterface.h"
-#include "D3DRenderInterface.h"
+#include "../Level.h"
 
-#include "Level.h"
 
 class Game
 {
 	Storage m_Level;
 
-	RenderInterface* RI=nullptr;
-	RenderInterface* RI2=nullptr;
+	RenderInterface* RI = nullptr;
 
 	void reset()
 	{
@@ -66,7 +60,7 @@ class Game
 
 	void drawGameInfo()
 	{
-		cout << "Player Move Count : "<<m_Level.GetPlayerMoveCnt()<<endl;
+		cout << "Player Move Count : " << m_Level.GetPlayerMoveCnt() << endl;
 	}
 
 	void drawDebugInfo()
@@ -78,7 +72,7 @@ class Game
 		m_Level.ClearLog();
 	}
 
-	void clearScreen() const {	system("cls");	}
+	void clearScreen() const {	system("cls"); }
 
 public:
 	Game() { }
@@ -91,9 +85,7 @@ public:
 
 	void Initialize(int Width, int Height)
 	{
-		RI = new D3DRenderInterface();
-		RI2 = new ConsoleRenderInterface();
-
+		RI = new ConsoleRenderInterface();
 		srand(static_cast<unsigned int>(time(NULL)));
 
 		m_Level.Create(Width, Height);
@@ -102,7 +94,6 @@ public:
 	void Terminate()
 	{
 		delete RI;
-		delete RI2;
 	}
 
 	void Draw()
@@ -110,7 +101,7 @@ public:
 		clearScreen();
 		drawGameInfo();
 		m_Level.Render(RI);
-		m_Level.Render(RI2);
+		cout << endl;
 		drawDebugInfo();
 
 		if (m_Level.IsComplete())
@@ -118,6 +109,7 @@ public:
 		else
 			drawInputMessage();
 	}
+
 	bool Update()
 	{
 		char input = getInput();
@@ -140,29 +132,10 @@ public:
 
 };
 
-#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
-namespace GameLib
+#pragma comment(linker, "/SUBSYSTEM:CONSOLE")
+int main()
 {
-	void Framework::update()
-	{
-		static Game game;
-		static bool bInit = false;
-		if (!bInit)
-		{
-			game.Initialize(8, 10);
-			game.Draw();
-			bInit = true;
-		}
-		else
-		{
-			bool bQuit=game.Update();
-			game.Draw();
-			if (bQuit)
-				Framework::instance().requestEnd();
-			if (Framework::instance().isEndRequested())
-			{
-				game.Terminate();
-			}
-		}
-	}
+	Game game;
+	game.Start(8,8);
+	return 0;
 }
