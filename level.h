@@ -150,8 +150,8 @@ class Storage
 			break;
 		}
 
-		int srcX = m_Player.GetPosX();
-		int srcY = m_Player.GetPosY();
+		int srcX = m_Player.PosX();
+		int srcY = m_Player.PosY();
 		int destX = srcX + dx;
 		int destY = srcY + dy;
 
@@ -193,13 +193,13 @@ public:
 	Storage() {}
 	virtual ~Storage() {}
 
-	int GetWidth() const { return m_Width; }
-	int GetHeight() const { return m_Height; }
-	int GetPlayerPosX() const { return m_Player.GetPosX(); }
-	int GetPlayerPosY() const { return m_Player.GetPosY(); }
-	int GetBoxCnt() const { return m_BoxCnt; }
-	int GetPlayerMoveCnt() const { return m_Player.GetMoveCnt(); }
-	string GetPrevFrameLog() const { return m_PrevFrameLog.str(); }
+	int Width() const { return m_Width; }
+	int Height() const { return m_Height; }
+	int PlayerPosX() const { return m_Player.PosX(); }
+	int PlayerPosY() const { return m_Player.PosY(); }
+	int BoxCnt() const { return m_BoxCnt; }
+	int PlayerMoveCnt() const { return m_Player.MoveCnt(); }
+	string PrevFrameLog() const { return m_PrevFrameLog.str(); }
 	void ClearLog() { m_PrevFrameLog.str(""); m_PrevFrameLog << endl;; }
 
 	void Create(int Width, int Height)

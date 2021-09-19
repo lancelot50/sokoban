@@ -13,8 +13,8 @@ public:
 		m_PosY = PosY;
 		++m_MoveCnt;
 	}
-	int GetPosX() const { return m_PosX; }
-	int GetPosY() const { return m_PosY; }
-	int GetMoveCnt() const { return m_MoveCnt; }
+	int PosX() const { return m_PosX; }
+	int PosY() const { return m_PosY; }
+	int MoveCnt() const { return m_MoveCnt; }
 	void ResetMoveCnt() { m_MoveCnt = 0; }
 };

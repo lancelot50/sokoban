@@ -60,15 +60,15 @@ class Game
 
 	void drawGameInfo()
 	{
-		cout << "Player Move Count : " << m_Level.GetPlayerMoveCnt() << endl;
+		cout << "Player Move Count : " << m_Level.PlayerMoveCnt() << endl;
 	}
 
 	void drawDebugInfo()
 	{
 		cout << endl;
-		cout << "플레이어 Pos(" << m_Level.GetPlayerPosX() << ", " << m_Level.GetPlayerPosY() << ")" << endl;
-		cout << "StorageWidth : " << m_Level.GetWidth() << ", StorageHeight:" << m_Level.GetHeight() << ",  BoxCnt:" << m_Level.GetBoxCnt() << endl;
-		cout << endl << "PrevFrameLog : " << m_Level.GetPrevFrameLog() << endl;
+		cout << "플레이어 Pos(" << m_Level.PlayerPosX() << ", " << m_Level.PlayerPosY() << ")" << endl;
+		cout << "StorageWidth : " << m_Level.Width() << ", StorageHeight:" << m_Level.Height() << ",  BoxCnt:" << m_Level.BoxCnt() << endl;
+		cout << endl << "PrevFrameLog : " << m_Level.PrevFrameLog() << endl;
 		m_Level.ClearLog();
 	}
 
