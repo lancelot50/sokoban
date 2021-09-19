@@ -44,7 +44,6 @@ enum ImageID
 	IMAGE_ID_PLAYER,
 	IMAGE_ID_WALL,
 	IMAGE_ID_BLOCK,
-	IMAGE_ID_BLOCK_ON_GOAL,
 	IMAGE_ID_GOAL,
 	IMAGE_ID_SPACE,
 };
@@ -75,28 +74,10 @@ public:
 	unsigned int* Data() const { return m_Data; }
 	void Draw(int x, int y, ImageID ID)
 	{
-		draw(x * 32, y * 32, ID * 32, 0, 32, 32);
+		drawAlphaBlend(x * 32, y * 32, ID * 32, 0, 32, 32);
 	}
-	void DrawAlpha(int x, int y, ImageID ID)
-	{
-		drawAlpha(x * 32, y * 32, ID * 32, 0, 32, 32);
-	}
-
 
 	void draw(int DestX, int DestY, int SrcX, int SrcY, int Width, int Height) const
-	{
-		unsigned int* vram=Framework::instance().videoMemory();
-		unsigned windowWidth = Framework::instance().width();
-
-		for (int y = 0; y < Height; ++y)
-			for (int x = 0; x < Width; ++x)
-			{
-				unsigned int* dest = &vram[(y + DestY) * windowWidth + (x + DestX)];
-				*dest = m_Data[(y + SrcY) * m_Width + (x + SrcX)];
-			}
-	}
-
-	void drawAlpha(int DestX, int DestY, int SrcX, int SrcY, int Width, int Height) const
 	{
 		unsigned int* vram = Framework::instance().videoMemory();
 		unsigned windowWidth = Framework::instance().width();
@@ -112,6 +93,31 @@ public:
 				}
 			}
 	}
+
+	void drawAlphaBlend(int DestX, int DestY, int SrcX, int SrcY, int Width, int Height) const
+	{
+		unsigned int* vram = Framework::instance().videoMemory();
+		unsigned windowWidth = Framework::instance().width();
+
+		for (int y = 0; y < Height; ++y)
+			for (int x = 0; x < Width; ++x)
+			{
+				unsigned src = m_Data[(y + SrcY) * m_Width + (x + SrcX)];
+				unsigned int* dest = &vram[(y + DestY) * windowWidth + (x + DestX)];
+				unsigned int srcA = (src & 0xff000000) >> 24;
+				unsigned int srcR = src & 0xff0000;
+				unsigned int srcG = src & 0x00ff00;
+				unsigned int srcB = src & 0x0000ff;
+				unsigned int destR = *dest & 0xff0000;
+				unsigned int destG = *dest & 0x00ff00;
+				unsigned int destB = *dest & 0x0000ff;
+				unsigned int r = (srcR - destR) * srcA / 255 + destR;
+				unsigned int g = (srcG - destG) * srcA / 255 + destG;
+				unsigned int b = (srcB - destB) * srcA / 255 + destB;
+				*dest = (r & 0xff0000) | (g & 0x00ff00) | b;
+			}
+	}
+
 
 };
 
@@ -140,8 +146,6 @@ class D3DRenderInterface : public RenderInterface
 		m_BlockTypeImageIDConverter[GOAL] = IMAGE_ID_GOAL;
 		m_BlockTypeImageIDConverter[BOX] = IMAGE_ID_BLOCK;
 		m_BlockTypeImageIDConverter[PLAYER] = IMAGE_ID_PLAYER;
-		m_BlockTypeImageIDConverter[BOX_ON_THE_GOAL] = IMAGE_ID_BLOCK_ON_GOAL;
-		m_BlockTypeImageIDConverter[PLAYER_ON_THE_GOAL] = IMAGE_ID_PLAYER;
 	}
 
 	void drawCell(int X, int Y, unsigned int Color) const
@@ -160,7 +164,7 @@ public:
 	{
 		createStorageColorFiller();
 		createBlockTypeImageIDConverter();
-		m_pImage = new Image("nimotsuKunImage.dds");
+		m_pImage = new Image("nimotsuKunImage2.dds");
 	}
 	~D3DRenderInterface()
 	{
@@ -168,8 +172,19 @@ public:
 	}
 	void Render(int X, int Y, BlockType Type)
 	{
-//		drawCell(X, Y, m_StorageColorFiller[Type]);
-		ImageID id = m_BlockTypeImageIDConverter[Type];
-		m_pImage->Draw(X, Y, id);
+		if ((Type & WALL))
+		{
+			ImageID id = m_BlockTypeImageIDConverter[Type];
+			m_pImage->Draw(X, Y, id);
+		}
+		else if( Type & GOAL)
+			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[GOAL]);
+		else
+			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[EMPTY_SLOT]);
+
+		if (Type & PLAYER)
+			m_pImage->Draw(X, Y, IMAGE_ID_PLAYER);
+		else if( Type & BOX)
+			m_pImage->Draw(X, Y, IMAGE_ID_BLOCK);
 	}
 };
