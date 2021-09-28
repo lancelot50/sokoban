@@ -22,6 +22,6 @@ public:
 	}
 	void Render(int X, int Y, BlockType Type)
 	{
-		cout << m_StorageTextRenderer[Type];
+		std::cout << m_StorageTextRenderer[Type];
 	}
 };

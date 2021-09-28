@@ -1,11 +1,9 @@
 #include"GameLib\Framework.h"
 
 using namespace GameLib;
-//using namespace std;
 
-//#include<iostream>
+#include<iostream>
 #include<string>
-using namespace std;
 #include<sstream>
 
 
@@ -19,6 +17,7 @@ using namespace std;
 #include "D3DRenderInterface.h"
 
 #include "Level.h"
+
 
 class Game
 {
@@ -34,15 +33,15 @@ class Game
 
 	void drawWinMessage()
 	{
-		cout << "******************" << endl;
-		cout << "     You Win!" << endl;
-		cout << "******************" << endl;
-		cout << "**** continue(y/n)? ***" << endl;
+		std::cout << "******************" << endl;
+		std::cout << "     You Win!" << endl;
+		std::cout << "******************" << endl;
+		std::cout << "**** continue(y/n)? ***" << endl;
 	}
 	void drawInputMessage()
 	{
-		cout << "*************************************" << endl;
-		cout << "LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
+		std::cout << "*************************************" << endl;
+		std::cout << "LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
 	}
 
 	void gameLoop()
@@ -60,21 +59,48 @@ class Game
 	char getInput()
 	{
 		char inputChar = 0;
-		cin >> inputChar;
+		std::cin >> inputChar;
 		return inputChar;
+	}
+
+	char getRealTimeInput()
+	{
+		enum Char
+		{
+			A,D,W,X,Max_Char
+		};
+		static bool prevInput[Max_Char] = { false, false, false, false };
+		bool inputChar[Max_Char];
+		inputChar[A] = Framework::instance().isKeyOn('a');
+		inputChar[D] = Framework::instance().isKeyOn('d');
+		inputChar[W] = Framework::instance().isKeyOn('w');
+		inputChar[X] = Framework::instance().isKeyOn('x');
+		char inChar = 0;
+		if (inputChar[A] && !prevInput[A])
+			inChar = 'a';
+		else if (inputChar[D] && !prevInput[D])
+			inChar = 'd';
+		if (inputChar[W] && !prevInput[W])
+			inChar = 'w';
+		else if (inputChar[X] && !prevInput[X])
+			inChar = 'x';
+		for( int i=0; i<Max_Char; ++i)
+			prevInput[i] = inputChar[i];
+
+		return inChar;
 	}
 
 	void drawGameInfo()
 	{
-		cout << "Player Move Count : "<<m_Level.PlayerMoveCnt()<<endl;
+		std::cout << "Player Move Count : "<<m_Level.PlayerMoveCnt()<<endl;
 	}
 
 	void drawDebugInfo()
 	{
-		cout << endl;
-		cout << "플레이어 Pos(" << m_Level.PlayerPosX() << ", " << m_Level.PlayerPosY() << ")" << endl;
-		cout << "StorageWidth : " << m_Level.Width() << ", StorageHeight:" << m_Level.Height() << ",  BoxCnt:" << m_Level.BoxCnt() << endl;
-		cout << endl << "PrevFrameLog : " << m_Level.PrevFrameLog() << endl;
+		std::cout << endl;
+		std::cout << "플레이어 Pos(" << m_Level.PlayerPosX() << ", " << m_Level.PlayerPosY() << ")" << endl;
+		std::cout << "StorageWidth : " << m_Level.Width() << ", StorageHeight:" << m_Level.Height() << ",  BoxCnt:" << m_Level.BoxCnt() << endl;
+		std::cout << endl << "PrevFrameLog : " << m_Level.PrevFrameLog() << endl;
 		m_Level.ClearLog();
 	}
 
@@ -107,7 +133,7 @@ public:
 
 	void Draw()
 	{
-		clearScreen();
+//		clearScreen();
 		drawGameInfo();
 		m_Level.Render(RI);
 		m_Level.Render(RI2);
@@ -120,20 +146,12 @@ public:
 	}
 	bool Update()
 	{
-		char input = getInput();
-		if (input == 'q')
-			return true;
-		else if (m_Level.IsComplete())
+		if (m_Level.IsComplete())
 		{
-			if (input == 'y')
-			{
-				reset();
-				return false;
-			}
-			else
-				return true;
+			reset();
+			return false;
 		}
-
+		char input = getRealTimeInput();
 		m_Level.Update(input);
 		return false;
 	}

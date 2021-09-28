@@ -124,7 +124,7 @@ class Storage
 			result = DOWN;
 			break;
 		default:
-			cout << "Undefined input:" << input << endl;
+			std::cout << "Undefined input:" << input << endl;
 		}
 
 		return result;
@@ -254,7 +254,7 @@ public:
 				BlockType type = m_Storage2D(i, j);
 				RI->Render(i, j, type);
 			}
-			cout << endl;
+			std::cout << endl;
 		}
 	}
 };
