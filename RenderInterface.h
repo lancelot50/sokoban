@@ -3,5 +3,5 @@
 class RenderInterface
 {
 public:
-	virtual void Render(int X, int Y, BlockType Type) = 0;
+	virtual void Render(int X, int Y, Object Obj) = 0;
 };

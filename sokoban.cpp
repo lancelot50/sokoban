@@ -157,7 +157,9 @@ public:
 	}
 };
 
-#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+//#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
+
 namespace GameLib
 {
 	void Framework::update()

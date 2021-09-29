@@ -76,6 +76,14 @@ public:
 	{
 		drawAlphaBlend(x * 32, y * 32, ID * 32, 0, 32, 32);
 	}
+	void DrawAnimation(int x, int y, ImageID ID, int MoveX, int MoveY, int MoveCount)
+	{
+		static const int IMAGE_SIZE = 32;
+		int dx = MoveX * (IMAGE_SIZE - MoveCount);
+		int dy = MoveY * (IMAGE_SIZE - MoveCount);
+		drawAlphaBlend(x * 32 - dx, y * 32 - dy, ID * 32, 0, 32, 32);
+	}
+
 
 	void draw(int DestX, int DestY, int SrcX, int SrcY, int Width, int Height) const
 	{
@@ -170,21 +178,25 @@ public:
 	{
 		delete m_pImage;
 	}
-	void Render(int X, int Y, BlockType Type)
+
+	void Render(int X, int Y, Object Obj)
 	{
-		if ((Type & WALL))
+		int moveCount = Object::MoveCount();
+		int dx = Obj.MoveX();
+		int dy = Obj.MoveY();
+		if (Obj.HasWall())
 		{
-			ImageID id = m_BlockTypeImageIDConverter[Type];
+			ImageID id = m_BlockTypeImageIDConverter[Obj.GetType()];
 			m_pImage->Draw(X, Y, id);
 		}
-		else if( Type & GOAL)
+		else if( Obj.HasGoal())
 			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[GOAL]);
 		else
 			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[EMPTY_SLOT]);
 
-		if (Type & PLAYER)
-			m_pImage->Draw(X, Y, IMAGE_ID_PLAYER);
-		else if( Type & BOX)
-			m_pImage->Draw(X, Y, IMAGE_ID_BLOCK);
+		if (Obj.HasPlayer())
+			m_pImage->DrawAnimation(X, Y, IMAGE_ID_PLAYER, dx, dy, moveCount);
+		else if(Obj.HasBox())
+			m_pImage->DrawAnimation(X, Y, IMAGE_ID_BLOCK, dx, dy, moveCount);
 	}
 };

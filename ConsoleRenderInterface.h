@@ -20,8 +20,8 @@ public:
 	{
 		createBlockRenderArray();
 	}
-	void Render(int X, int Y, BlockType Type)
+	void Render(int X, int Y, Object Obj)
 	{
-		std::cout << m_StorageTextRenderer[Type];
+		std::cout << m_StorageTextRenderer[Obj.GetType()];
 	}
 };

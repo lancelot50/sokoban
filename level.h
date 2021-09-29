@@ -11,7 +11,7 @@ class Storage
 		HOLD
 	};
 
-	Array2D<BlockType> m_Storage2D{ 8,8 };
+	Array2D<Object> m_Storage2D{ 8,8 };
 
 	int m_Width = 0;
 	int m_Height = 0;
@@ -29,11 +29,11 @@ class Storage
 			{
 				if (i == 0 || j == 0 || j == m_Height - 1 || i == m_Width - 1)
 				{
-					m_Storage2D(i, j) = WALL;
+					m_Storage2D(i, j).SetType(WALL);
 				}
 				else
 				{
-					m_Storage2D(i, j) = EMPTY_SLOT;
+					m_Storage2D(i, j).SetType(EMPTY_SLOT);
 				}
 			}
 		}
@@ -41,7 +41,7 @@ class Storage
 
 	bool isEdge(int X, int Y) const
 	{
-		if (m_Storage2D(X - 1, Y) != WALL && m_Storage2D(X + 1, Y) != WALL && m_Storage2D(X, Y - 1) != WALL && m_Storage2D(X, Y + 1) != WALL)
+		if (!m_Storage2D(X - 1, Y).IsWall() && !m_Storage2D(X + 1, Y).IsWall() && !m_Storage2D(X, Y - 1).IsWall() && !m_Storage2D(X, Y + 1).IsWall())
 			return false;
 		else
 			return true;
@@ -57,9 +57,9 @@ class Storage
 				{
 					bool bCreateBox = (rand() % 10 == 0);
 
-					if (m_Storage2D(i, j) != WALL && !isEdge(i, j) && bCreateBox)
+					if ( !m_Storage2D(i, j).IsWall() && !isEdge(i, j) && bCreateBox)
 					{
-						m_Storage2D(i, j) = BOX;
+						m_Storage2D(i, j).SetType(BOX);
 						++m_BoxCnt;
 					}
 				}
@@ -75,9 +75,9 @@ class Storage
 			int x = (rand() % (m_Width - 2)) + 1;
 			int y = (rand() % (m_Height - 2)) + 1;
 
-			if (m_Storage2D(x, y) == EMPTY_SLOT)
+			if (m_Storage2D(x, y).IsEmpty())
 			{
-				m_Storage2D(x, y) = GOAL;
+				m_Storage2D(x, y).SetType(GOAL);
 				--boxCnt;
 			}
 		}
@@ -89,9 +89,9 @@ class Storage
 		{
 			int x = (rand() % (m_Width - 2)) + 1;
 			int y = (rand() % (m_Height - 2)) + 1;
-			if (m_Storage2D(x, y) == EMPTY_SLOT)
+			if (m_Storage2D(x, y).IsEmpty())
 			{
-				m_Storage2D(x, y) = PLAYER;
+				m_Storage2D(x, y).SetType(PLAYER);
 				m_Player.SetPos(x, y);
 				break;
 			}
@@ -102,7 +102,7 @@ class Storage
 	{
 		m_PrevFrameLog.setf(ios_base::hex, ios_base::basefield);
 		m_PrevFrameLog.setf(ios_base::showbase);
-		m_PrevFrameLog << ", dest Block:" << m_Storage2D(DestX, DestY) << endl;;
+		m_PrevFrameLog << ", dest Block:" << m_Storage2D(DestX, DestY).GetType() << endl;;
 		m_PrevFrameLog.unsetf(ios_base::hex);
 	}
 
@@ -124,7 +124,7 @@ class Storage
 			result = DOWN;
 			break;
 		default:
-			std::cout << "Undefined input:" << input << endl;
+			m_PrevFrameLog << "Undefined input:" << input << endl;
 		}
 
 		return result;
@@ -132,6 +132,21 @@ class Storage
 
 	void playerMove(MoveAction Move)
 	{
+		m_PrevFrameLog << Object::MoveCount() << endl;
+		if (Object::MoveCount() == 32)
+		{
+			Object::SetMoveCount(0);
+			for (int y = 0; y < m_Height; ++y)
+				for (int x = 0; x < m_Width; ++x)
+					m_Storage2D(x, y).SetMoveXY(0, 0);
+		}
+		if (Object::MoveCount() > 0)
+		{
+			Object::SetMoveCount(Object::MoveCount() + 1);
+			return;
+		}
+
+
 		int dx = 0;
 		int dy = 0;
 		switch (Move)
@@ -160,32 +175,39 @@ class Storage
 		// 1. 목적지가 wall 이면 return false
 		// 2. 목적지에 box 가 있으면 box 진행 방향으로 1칸 더 앞을 확인해보고 가능하다면(wall 아님, box 아님) 박스를 옮기고 플레이어도 옮긴다.
 		// 3. 아니면 목적지로 플레이어를 이동시킨다.
-		if (m_Storage2D(destX, destY) & WALL)
+		if (m_Storage2D(destX, destY).HasWall())
 		{
 			m_PrevFrameLog << "WALL에 막힘" << endl;
 			return;
 		}
-		else if (m_Storage2D(destX, destY) & BOX)
+		else if (m_Storage2D(destX, destY).HasBox())
 		{
 			m_PrevFrameLog << "앞에 BOX" << endl;
 			int destDestX = destX + dx;
 			int destDestY = destY + dy;
-			bool isWall = m_Storage2D(destDestX, destDestY) & WALL;
-			bool isBox = m_Storage2D(destDestX, destDestY) & BOX;
+			bool isWall = m_Storage2D(destDestX, destDestY).HasWall();
+			bool isBox = m_Storage2D(destDestX, destDestY).HasBox();
 			if (!isWall && !isBox)
 			{
-				m_Storage2D(destDestX, destDestY) = static_cast<BlockType>(m_Storage2D(destDestX, destDestY) ^ BOX);
-				m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY) ^ BOX);
-				m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY) ^ PLAYER);
-				m_Storage2D(srcX, srcY) = static_cast<BlockType>(m_Storage2D(srcX, srcY) ^ PLAYER);
+				m_Storage2D(destDestX, destDestY).ReverseBox();
+				m_Storage2D(destDestX, destDestY).SetMoveXY(dx, dy);
+				m_Storage2D(destX, destY).ReverseBox();
+				m_Storage2D(destX, destY).ReversePlayer();
+				m_Storage2D(destX, destY).SetMoveXY(dx, dy);
+				m_Storage2D(srcX, srcY).ReversePlayer();
+				m_Storage2D(srcX, srcY).SetMoveXY(dx, dy);
 				m_Player.SetPos(destX, destY);
+				Object::SetMoveCount(1);
 			}
 		}
-		else
+		else if(m_Storage2D(destX, destY).IsEmpty() || m_Storage2D(destX, destY).IsGoal())
 		{
-			m_Storage2D(destX, destY) = static_cast<BlockType>(m_Storage2D(destX, destY) ^ PLAYER);
-			m_Storage2D(srcX, srcY) = static_cast<BlockType>(m_Storage2D(srcX, srcY) ^ PLAYER);
+			m_Storage2D(destX, destY).ReversePlayer();
+			m_Storage2D(destX, destY).SetMoveXY(dx, dy);
+			m_Storage2D(srcX, srcY).ReversePlayer();
+			m_Storage2D(srcX, srcY).SetMoveXY(dx, dy);
 			m_Player.SetPos(destX, destY);
+			Object::SetMoveCount(1);
 		}
 	}
 
@@ -211,7 +233,6 @@ public:
 
 	void Init()
 	{
-		m_Storage2D.Fill(EMPTY_SLOT);
 		m_BoxCnt = 0;
 		createWall();
 		loadBox();
@@ -234,7 +255,7 @@ public:
 		{
 			for (int i = 0; i < m_Width; ++i)
 			{
-				if (m_Storage2D(i, j) == BOX_ON_THE_GOAL)
+				if (m_Storage2D(i, j).IsBoxOnTheGoal())
 					++matchCnt;
 			}
 		}
@@ -251,8 +272,8 @@ public:
 		{
 			for (int i = 0; i < m_Width; ++i)
 			{
-				BlockType type = m_Storage2D(i, j);
-				RI->Render(i, j, type);
+				Object obj = m_Storage2D(i, j);
+				RI->Render(i, j, obj);
 			}
 			std::cout << endl;
 		}
