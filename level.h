@@ -266,16 +266,32 @@ public:
 			return false;
 	}
 
-	void Render(RenderInterface* RI) const
+	void renderForeground(RenderInterface* RI) const
 	{
 		for (int j = 0; j < m_Height; ++j)
 		{
 			for (int i = 0; i < m_Width; ++i)
 			{
 				Object obj = m_Storage2D(i, j);
-				RI->Render(i, j, obj);
+				RI->RenderForeground(i, j, obj);
 			}
-			std::cout << endl;
 		}
+	}
+	void renderBackground(RenderInterface* RI) const
+	{
+		for (int j = 0; j < m_Height; ++j)
+		{
+			for (int i = 0; i < m_Width; ++i)
+			{
+				Object obj = m_Storage2D(i, j);
+				RI->RenderBackground(i, j, obj);
+			}
+		}
+	}
+
+	void Render(RenderInterface* RI) const
+	{
+		renderBackground(RI);
+		renderForeground(RI);
 	}
 };

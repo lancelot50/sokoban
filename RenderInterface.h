@@ -3,5 +3,6 @@
 class RenderInterface
 {
 public:
-	virtual void Render(int X, int Y, Object Obj) = 0;
+	virtual void RenderBackground(int X, int Y, Object Obj) = 0;
+	virtual void RenderForeground(int X, int Y, Object Obj) = 0;
 };

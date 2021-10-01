@@ -154,6 +154,8 @@ class D3DRenderInterface : public RenderInterface
 		m_BlockTypeImageIDConverter[GOAL] = IMAGE_ID_GOAL;
 		m_BlockTypeImageIDConverter[BOX] = IMAGE_ID_BLOCK;
 		m_BlockTypeImageIDConverter[PLAYER] = IMAGE_ID_PLAYER;
+		m_BlockTypeImageIDConverter[BOX_ON_THE_GOAL] = IMAGE_ID_GOAL;
+		m_BlockTypeImageIDConverter[PLAYER_ON_THE_GOAL] = IMAGE_ID_GOAL;
 	}
 
 	void drawCell(int X, int Y, unsigned int Color) const
@@ -179,24 +181,29 @@ public:
 		delete m_pImage;
 	}
 
-	void Render(int X, int Y, Object Obj)
+	void RenderBackground(int X, int Y, Object Obj)
 	{
-		int moveCount = Object::MoveCount();
-		int dx = Obj.MoveX();
-		int dy = Obj.MoveY();
-		if (Obj.HasWall())
+		if (Obj.HasWall() || Obj.HasGoal())
 		{
 			ImageID id = m_BlockTypeImageIDConverter[Obj.GetType()];
 			m_pImage->Draw(X, Y, id);
 		}
-		else if( Obj.HasGoal())
-			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[GOAL]);
 		else
-			m_pImage->Draw(X, Y, m_BlockTypeImageIDConverter[EMPTY_SLOT]);
+		{
+			ImageID id = m_BlockTypeImageIDConverter[EMPTY_SLOT];
+			m_pImage->Draw(X, Y, id);
+		}
+	}
+
+	void RenderForeground(int X, int Y, Object Obj)
+	{
+		int moveCount = Object::MoveCount();
+		int dx = Obj.MoveX();
+		int dy = Obj.MoveY();
 
 		if (Obj.HasPlayer())
 			m_pImage->DrawAnimation(X, Y, IMAGE_ID_PLAYER, dx, dy, moveCount);
-		else if(Obj.HasBox())
+		else if (Obj.HasBox())
 			m_pImage->DrawAnimation(X, Y, IMAGE_ID_BLOCK, dx, dy, moveCount);
 	}
 };
