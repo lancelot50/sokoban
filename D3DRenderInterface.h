@@ -126,6 +126,11 @@ public:
 			}
 	}
 
+	void draw()
+	{
+		drawAlphaBlend(0, 0, 0, 0, m_Width, m_Height);
+	}
+
 
 };
 

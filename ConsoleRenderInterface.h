@@ -22,7 +22,7 @@ public:
 	}
 	void RenderBackground(int X, int Y, Object Obj)
 	{
-		std::cout << m_StorageTextRenderer[Obj.GetType()];
+		cout << m_StorageTextRenderer[Obj.GetType()];
 	}
 
 	void RenderForeground(int X, int Y, Object Obj)

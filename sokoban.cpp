@@ -2,7 +2,7 @@
 
 using namespace GameLib;
 
-#include<iostream>
+//#include<iostream>
 #include<string>
 #include<sstream>
 
@@ -19,12 +19,15 @@ using namespace GameLib;
 #include "Level.h"
 
 
+
 class Game
 {
 	Storage m_Level;
 
 	RenderInterface* RI=nullptr;
 	RenderInterface* RI2=nullptr;
+
+//	Sequence* m_Seq=nullptr;
 
 	void reset()
 	{
@@ -33,15 +36,15 @@ class Game
 
 	void drawWinMessage()
 	{
-		std::cout << "******************" << endl;
-		std::cout << "     You Win!" << endl;
-		std::cout << "******************" << endl;
-		std::cout << "**** continue(y/n)? ***" << endl;
+		cout << "******************" << endl;
+		cout << "     You Win!" << endl;
+		cout << "******************" << endl;
+		cout << "**** continue(y/n)? ***" << endl;
 	}
 	void drawInputMessage()
 	{
-		std::cout << "*************************************" << endl;
-		std::cout << "LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
+		cout << "*************************************" << endl;
+		cout << "LEFT:a, RIGHT:d, UP:w, DOWN:x, QUIT:q" << endl;
 	}
 
 	void gameLoop()
@@ -59,7 +62,7 @@ class Game
 	char getInput()
 	{
 		char inputChar = 0;
-		std::cin >> inputChar;
+//		cin >> inputChar;
 		return inputChar;
 	}
 
@@ -92,22 +95,25 @@ class Game
 
 	void drawGameInfo()
 	{
-		std::cout << "Player Move Count : "<<m_Level.PlayerMoveCnt()<<endl;
+		cout << "Player Move Count : "<<m_Level.PlayerMoveCnt()<<endl;
 	}
 
 	void drawDebugInfo()
 	{
-		std::cout << endl;
-		std::cout << "플레이어 Pos(" << m_Level.PlayerPosX() << ", " << m_Level.PlayerPosY() << ")" << endl;
-		std::cout << "StorageWidth : " << m_Level.Width() << ", StorageHeight:" << m_Level.Height() << ",  BoxCnt:" << m_Level.BoxCnt() << endl;
-		std::cout << endl << "PrevFrameLog : " << m_Level.PrevFrameLog() << endl;
+		cout << endl;
+		cout << "플레이어 Pos(" << m_Level.PlayerPosX() << ", " << m_Level.PlayerPosY() << ")" << endl;
+		cout << "StorageWidth : " << m_Level.Width() << ", StorageHeight:" << m_Level.Height() << ",  BoxCnt:" << m_Level.BoxCnt() << endl;
+		cout << endl << "PrevFrameLog : " << m_Level.PrevFrameLog() << endl;
 		m_Level.ClearLog();
 	}
 
 	void clearScreen() const {	system("cls");	}
 
 public:
-	Game() { }
+	Game()
+	{
+//		m_Seq = new SequenceTitle;
+	}
 	void Start(int width, int height)
 	{
 		Initialize(width, height);
@@ -160,28 +166,81 @@ public:
 //#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 #pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
+
+class Sequence
+{
+public :
+	virtual void Update() = 0;
+};
+
+class SequenceTitle : public Sequence
+{
+	Image* m_pTitle = nullptr;
+public:
+	SequenceTitle()
+	{
+		m_pTitle = new Image("title.dds");
+	}
+	virtual ~SequenceTitle()
+	{
+		delete m_pTitle;
+	}
+	void Update()
+	{
+		if (m_pTitle)
+			m_pTitle->draw();
+		bool bSpaceKeyPressed = Framework::instance().isKeyTriggered(' ');
+		if (bSpaceKeyPressed)
+		{
+
+		}
+	}
+};
+
+class SequencePlay : public Sequence
+{
+	void Update()
+	{
+		bool bQKeyPressed = Framework::instance().isKeyTriggered('q');
+		if (bQKeyPressed)
+		{
+			cout << "SequencePlay" << endl;
+		}
+	}
+};
+
+
+
 namespace GameLib
 {
 	void Framework::update()
 	{
-		static Game game;
-		static bool bInit = false;
-		if (!bInit)
+		//static Game game;
+		//static bool bInit = false;
+		//if (!bInit)
+		//{
+		//	game.Initialize(8, 7);
+		//	game.Draw();
+		//	bInit = true;
+		//}
+		//else
+		//{
+		//	bool bQuit=game.Update();
+		//	game.Draw();
+		//	if (bQuit)
+		//		Framework::instance().requestEnd();
+		//	if (Framework::instance().isEndRequested())
+		//	{
+		//		game.Terminate();
+		//	}
+		//}
+
+		static Sequence* GameSeq;
+		if (GameSeq == nullptr)
 		{
-			game.Initialize(8, 7);
-			game.Draw();
-			bInit = true;
+			GameSeq = new SequenceTitle;
 		}
-		else
-		{
-			bool bQuit=game.Update();
-			game.Draw();
-			if (bQuit)
-				Framework::instance().requestEnd();
-			if (Framework::instance().isEndRequested())
-			{
-				game.Terminate();
-			}
-		}
+		GameSeq->Update();
+
 	}
 }
