@@ -166,29 +166,51 @@ public:
 //#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 #pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
-
-class Sequence
+class Screen
 {
 public :
 	virtual void Update() = 0;
 };
 
-class SequenceTitle : public Sequence
+class TitleScreen : public Screen
 {
 	Image* m_pTitle = nullptr;
 public:
-	SequenceTitle()
+	TitleScreen()
 	{
 		m_pTitle = new Image("title.dds");
 	}
-	virtual ~SequenceTitle()
+	virtual ~TitleScreen()
 	{
 		delete m_pTitle;
 	}
 	void Update()
 	{
 		if (m_pTitle)
-			m_pTitle->draw();
+			m_pTitle->Draw();
+		bool bSpaceKeyPressed = Framework::instance().isKeyTriggered(' ');
+		if (bSpaceKeyPressed)
+		{
+		}
+	}
+};
+
+class StageSelectScreen : public Screen
+{
+	Image* m_pStageSelect = nullptr;
+public:
+	StageSelectScreen()
+	{
+		m_pStageSelect = new Image("title.dds");
+	}
+	virtual ~StageSelectScreen()
+	{
+		delete m_pStageSelect;
+	}
+	void Update()
+	{
+		if (m_pStageSelect)
+			m_pStageSelect->Draw();
 		bool bSpaceKeyPressed = Framework::instance().isKeyTriggered(' ');
 		if (bSpaceKeyPressed)
 		{
@@ -197,14 +219,14 @@ public:
 	}
 };
 
-class SequencePlay : public Sequence
+class GameScreen : public Screen
 {
 	void Update()
 	{
 		bool bQKeyPressed = Framework::instance().isKeyTriggered('q');
 		if (bQKeyPressed)
 		{
-			cout << "SequencePlay" << endl;
+			cout << "GameScreen" << endl;
 		}
 	}
 };
@@ -235,12 +257,16 @@ namespace GameLib
 		//	}
 		//}
 
-		static Sequence* GameSeq;
+		static Screen* GameSeq;
 		if (GameSeq == nullptr)
 		{
-			GameSeq = new SequenceTitle;
+			GameSeq = new TitleScreen;
 		}
 		GameSeq->Update();
+//		switch (GameSeq->NextScreen())
+		{
+
+		}
 
 	}
 }

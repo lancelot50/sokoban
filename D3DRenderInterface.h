@@ -102,6 +102,13 @@ public:
 			}
 	}
 
+
+	void Draw()
+	{
+		drawAlphaBlend(0, 0, 0, 0, m_Width, m_Height);
+	}
+
+private :
 	void drawAlphaBlend(int DestX, int DestY, int SrcX, int SrcY, int Width, int Height) const
 	{
 		unsigned int* vram = Framework::instance().videoMemory();
@@ -125,13 +132,6 @@ public:
 				*dest = (r & 0xff0000) | (g & 0x00ff00) | b;
 			}
 	}
-
-	void draw()
-	{
-		drawAlphaBlend(0, 0, 0, 0, m_Width, m_Height);
-	}
-
-
 };
 
 class D3DRenderInterface : public RenderInterface
